@@ -571,6 +571,7 @@
     "classic-dark": { background: "#141414", foreground: "#d4d4d4", cursor: "#6a9bd5", selection: "#2d4a63" },
     "classic-gray": { background: "#232323", foreground: "#dcdcdc", cursor: "#7fb3e6", selection: "#3a5163" },
   };
+  const terminalFontSize = () => Math.max(9, Number(ui.fontSize || 13) - 2);
   const currentTermTheme = () => TERM_THEMES[document.body.dataset.uiTheme || "flat-dark"] || TERM_THEMES["flat-dark"];
   const wsURL = (id) => (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/terminal?id=" + enc(id);
   const sendResize = (ws, term) => { if (ws.readyState === 1) ws.send("\x00" + JSON.stringify({ resize: { cols: term.cols, rows: term.rows } })); };
@@ -624,7 +625,7 @@
     TERMINAL_META[id] = Object.assign({}, TERMINAL_META[id] || {}, meta);
     if (TERMS[id]) return TERMS[id];
     const el = document.createElement("div"); el.className = "xterm-holder";
-    const term = new Terminal({ fontSize: ui.fontSize, cursorBlink: true, fontFamily: "Menlo, Consolas, monospace", theme: currentTermTheme() });
+    const term = new Terminal({ fontSize: terminalFontSize(), lineHeight: 1, cursorBlink: true, fontFamily: "Menlo, Consolas, monospace", theme: currentTermTheme() });
     const fit = new FitAddon(); term.loadAddon(fit); term.open(el);
     const view = TERMS[id] = { id, term, ws: null, fit, el, closed: false, ran: false };
     term.attachCustomKeyEventHandler((event) => {
@@ -1009,7 +1010,7 @@
     setTimeout(() => { forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach(fitVisibleTerminal); }, 30);
   }
   function toggleUI(k) { ui[k] = !ui[k]; if (k === "wrapMargin" && ui.wrapMargin) ui.wrap = true; applyUIState(); }
-  function setFont(n) { ui.fontSize = Math.min(30, Math.max(8, n)); Object.values(TERMS).forEach((t) => { try { t.term.setOption("fontSize", ui.fontSize); } catch (e) {} }); applyUIState(); }
+  function setFont(n) { ui.fontSize = Math.min(30, Math.max(8, n)); Object.values(TERMS).forEach((t) => { try { t.term.setOption("fontSize", terminalFontSize()); } catch (e) {} }); applyUIState(); }
   function setSyntaxMode(m) { const t = activeFileTab(); if (!t) return; FILES[t.path].session.setMode("ace/mode/" + m); FILES[t.path].mode = m; setStatus(null, m); }
 
   // ============================================================

@@ -179,7 +179,8 @@ sudo ENABLE_HTTPS=false bash scripts/install-systemd.sh
 On plain HTTP, browser clipboard APIs may be unavailable. VRCloud IDE displays
 a paste dialog fallback. HTTPS enables direct clipboard access.
 
-Every new terminal runs `neofetch` and uses a Kali-inspired two-line prompt:
+Every new terminal runs compact `neofetch` system information (without the
+oversized ASCII logo) and uses a Kali-inspired two-line prompt:
 
 ```text
 ┌──(vrcloudproject㉿hostname)-[/workspace/path]

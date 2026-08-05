@@ -65,7 +65,7 @@ try {
     '[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc" 2>/dev/null\n' +
     'if command -v neofetch >/dev/null 2>&1 && [ -z "$VRCLOUD_NEOFETCH_SHOWN" ]; then\n' +
     '  export VRCLOUD_NEOFETCH_SHOWN=1\n' +
-    '  neofetch\n' +
+    '  neofetch --off --color_blocks off --disable packages gpu\n' +
     'fi\n' +
     "export PS1='\\[\\e[0;36m\\]┌──(\\[\\e[1;34m\\]vrcloudproject㉿\\h\\[\\e[0;36m\\])-[\\[\\e[1;37m\\]\\w\\[\\e[0;36m\\]]\\n└─\\[\\e[1;34m\\]#\\[\\e[0m\\] '\n");
 } catch (e) {}
