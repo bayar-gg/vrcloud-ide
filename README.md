@@ -60,7 +60,7 @@ sudo bash scripts/install-systemd.sh
 
 The installer:
 
-1. Installs `tmux`, `neofetch`, Nginx, Git, build tools, and CA certificates.
+1. Installs `tmux`, Nginx, Git, build tools, and CA certificates.
 2. Installs production npm dependencies.
 3. Creates the restricted `vrcloud` service account.
 4. Creates `/srv/vrcloud-workspace`.
@@ -84,7 +84,7 @@ Install system dependencies:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y tmux neofetch nginx snapd git build-essential python3 ca-certificates
+sudo apt-get install -y tmux nginx snapd git build-essential python3 ca-certificates
 ```
 
 Install project dependencies:
@@ -179,8 +179,7 @@ sudo ENABLE_HTTPS=false bash scripts/install-systemd.sh
 On plain HTTP, browser clipboard APIs may be unavailable. VRCloud IDE displays
 a paste dialog fallback. HTTPS enables direct clipboard access.
 
-Every new terminal runs compact `neofetch` system information (without the
-oversized ASCII logo) and uses a Kali-inspired two-line prompt:
+Every new terminal opens directly with a Kali-inspired two-line prompt:
 
 ```text
 ┌──(vrcloudproject㉿hostname)-[/workspace/path]
