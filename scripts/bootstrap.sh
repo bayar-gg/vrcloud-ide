@@ -62,7 +62,7 @@ bash "$APP_DIR/scripts/install-systemd.sh"
 echo "[5/5] Verifying installation..."
 systemctl is-active --quiet vrcloud-ide
 SERVER_IP="$(hostname -I | awk '{print $1}')"
-curl -fsSI "http://${SERVER_IP}:${PORT}/" >/dev/null
+curl -fsS -o /dev/null "http://127.0.0.1:${PORT}/login"
 
 echo
 echo "VRCloud IDE installation completed successfully."

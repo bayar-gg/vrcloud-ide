@@ -40,6 +40,18 @@ COOKIE_SECURE=false
 SESSION_MAX_AGE=604800
 EOF
 fi
+# Auto-installer ini menggunakan HTTP langsung, jadi cookie harus dapat
+# dikirim melalui http://IP:PORT walaupun .env berasal dari instalasi lama.
+if grep -q '^COOKIE_SECURE=' .env; then
+  sed -i 's/^COOKIE_SECURE=.*/COOKIE_SECURE=false/' .env
+else
+  printf '\nCOOKIE_SECURE=false\n' >> .env
+fi
+if grep -q '^HOST=' .env; then
+  sed -i 's/^HOST=.*/HOST=0.0.0.0/' .env
+else
+  printf 'HOST=0.0.0.0\n' >> .env
+fi
 chmod 600 .env
 
 chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR" "$WORKSPACE"
@@ -73,7 +85,23 @@ WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
-systemctl enable --now vrcloud-ide
+systemctl enable vrcloud-ide >/dev/null
+systemctl restart vrcloud-ide
+
+READY=false
+for _ in $(seq 1 30); do
+  if curl -fsS -o /dev/null "http://127.0.0.1:${PORT}/login"; then
+    READY=true
+    break
+  fi
+  sleep 1
+done
+if [[ "$READY" != "true" ]]; then
+  echo "VRCloud IDE failed to become ready." >&2
+  systemctl status vrcloud-ide --no-pager >&2 || true
+  journalctl -u vrcloud-ide -n 100 --no-pager >&2 || true
+  exit 1
+fi
 
 ACCESS_URL="http://$(hostname -I | awk '{print $1}'):${PORT}"
 

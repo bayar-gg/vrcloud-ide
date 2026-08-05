@@ -67,6 +67,11 @@ The command is safe to run again for updates. It preserves the existing
 update. Repository ownership is handled with a per-command `safe.directory`
 override; the installer does not modify global Git configuration.
 
+When upgrading from an older HTTPS/Certbot installer, it automatically resets
+`COOKIE_SECURE=false`, rewrites the bind address to `0.0.0.0`, restarts the
+already-running service, and waits for the localhost health check before
+printing the public URL.
+
 ## Tested Environment
 
 - Ubuntu 22.04 LTS
