@@ -72,6 +72,31 @@ When upgrading from an older HTTPS/Certbot installer, it automatically resets
 already-running service, and waits for the localhost health check before
 printing the public URL.
 
+## Login Credentials and Password Reset
+
+The initial installer prints the generated password once. Existing credentials
+can be viewed directly on the VPS:
+
+```bash
+sudo awk -F= '/^AUTH_(USER|PASS)=/{print $1"="$2}' /opt/vrcloud-ide/.env
+```
+
+Set your own password interactively:
+
+```bash
+sudo /opt/vrcloud-ide/scripts/change-password.sh
+```
+
+Or generate and display a new strong password with one command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/change-password.sh \
+  | sudo bash -s -- --generate
+```
+
+The password script also rotates `AUTH_SECRET`, invalidates all existing login
+cookies, preserves `.env` ownership/mode, and restarts the service.
+
 ## Tested Environment
 
 - Ubuntu 22.04 LTS

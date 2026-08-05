@@ -113,5 +113,6 @@ if [[ -n "$GENERATED_PASSWORD" ]]; then
   echo "Generated password: ${GENERATED_PASSWORD}"
 else
   echo "Password: unchanged in ${APP_DIR}/.env"
+  echo "Change password: sudo ${APP_DIR}/scripts/change-password.sh"
 fi
 echo "Status: systemctl status vrcloud-ide"
