@@ -84,7 +84,7 @@ if [[ "$ENABLE_HTTPS" == "true" ]]; then
   fi
   APP_DIR="$APP_DIR" PORT="$PORT" bash "$APP_DIR/scripts/setup-https-ip.sh" "$PUBLIC_IP"
   systemctl restart vrcloud-ide
-  ACCESS_URL="https://${PUBLIC_IP}/"
+  ACCESS_URL="https://${PUBLIC_IP}:${PORT}/"
 fi
 
 echo

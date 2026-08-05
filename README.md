@@ -72,7 +72,7 @@ The installer:
 Open:
 
 ```text
-https://YOUR_SERVER_IP/
+https://YOUR_SERVER_IP:1337/
 ```
 
 The generated username/password are displayed once by the installer. Store
@@ -152,7 +152,8 @@ sudo systemctl restart vrcloud-ide
 The script installs Certbot 5.4+ through Snap, requests the IP certificate,
 configures Nginx as a WebSocket reverse proxy, redirects HTTP to HTTPS, updates
 `COOKIE_SECURE=true`, and installs an Nginx reload deploy hook.
-The legacy URL `http://PUBLIC_IP:1337/` also redirects to the HTTPS URL while
+Port `1337` remains the canonical public port: Nginx terminates TLS on
+`https://PUBLIC_IP:1337/`, plain HTTP on the same port redirects to HTTPS, and
 the Node.js backend remains bound safely to `127.0.0.1:1337`.
 
 Requirements:

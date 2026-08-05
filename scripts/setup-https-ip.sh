@@ -73,14 +73,35 @@ server {
     }
 
     location / {
-        return 301 https://${PUBLIC_IP}\$request_uri;
+        return 301 https://${PUBLIC_IP}:${PORT}\$request_uri;
     }
 }
 
 server {
-    listen ${PUBLIC_IP}:${PORT};
+    listen ${PUBLIC_IP}:${PORT} ssl;
     server_name ${PUBLIC_IP};
-    return 301 https://${PUBLIC_IP}\$request_uri;
+
+    ssl_certificate /etc/letsencrypt/live/${PUBLIC_IP}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${PUBLIC_IP}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:VRCloudTLS:10m;
+    ssl_session_timeout 1d;
+
+    error_page 497 =301 https://${PUBLIC_IP}:${PORT}\$request_uri;
+    client_max_body_size 500m;
+
+    location / {
+        proxy_pass http://127.0.0.1:${PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
 }
 
 server {
@@ -130,4 +151,4 @@ fi
 
 nginx -t
 systemctl reload nginx
-echo "Trusted HTTPS enabled: https://${PUBLIC_IP}/"
+echo "Trusted HTTPS enabled: https://${PUBLIC_IP}:${PORT}/"
