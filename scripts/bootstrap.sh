@@ -62,10 +62,19 @@ if [[ -n "${VR_PASSWORD:-}" ]]; then export VR_PASSWORD; fi
 bash "$APP_DIR/scripts/install-systemd.sh"
 
 echo "[5/5] Verifying installation..."
-systemctl is-active --quiet vrcloud-ide
+systemctl is-enabled --quiet vrcloud-ide
+[[ -x /usr/local/bin/vrcloud ]]
+if systemctl is-active --quiet vrcloud-ide; then
+  echo "Service should remain stopped after installation." >&2
+  exit 1
+fi
 SERVER_IP="$(hostname -I | awk '{print $1}')"
-curl -fsS -o /dev/null "http://127.0.0.1:${PORT}/login"
 
 echo
 echo "VRCloud IDE installation completed successfully."
-echo "Open: http://${SERVER_IP}:${PORT}/"
+echo "Service is installed but stopped."
+echo "Start: vrcloud start"
+echo "Stop: vrcloud stop"
+echo "Login: vrcloud password"
+echo "Change password: vrcloud newpassword"
+echo "URL after start: http://${SERVER_IP}:${PORT}/"

@@ -84,24 +84,10 @@ NoNewPrivileges=true
 WantedBy=multi-user.target
 EOF
 
+ln -sfn "$APP_DIR/scripts/vrcloud" /usr/local/bin/vrcloud
 systemctl daemon-reload
 systemctl enable vrcloud-ide >/dev/null
-systemctl restart vrcloud-ide
-
-READY=false
-for _ in $(seq 1 30); do
-  if curl -fsS -o /dev/null "http://127.0.0.1:${PORT}/login"; then
-    READY=true
-    break
-  fi
-  sleep 1
-done
-if [[ "$READY" != "true" ]]; then
-  echo "VRCloud IDE failed to become ready." >&2
-  systemctl status vrcloud-ide --no-pager >&2 || true
-  journalctl -u vrcloud-ide -n 100 --no-pager >&2 || true
-  exit 1
-fi
+systemctl stop vrcloud-ide || true
 
 PASSWORD_ROTATED=false
 if [[ -n "${VR_PASSWORD:-}" ]]; then
@@ -117,7 +103,8 @@ fi
 ACCESS_URL="http://$(hostname -I | awk '{print $1}'):${PORT}"
 
 echo
-echo "VRCloud IDE URL: ${ACCESS_URL}"
+echo "VRCloud IDE installed but not started."
+echo "URL after start: ${ACCESS_URL}"
 echo "Workspace: ${WORKSPACE}"
 echo "Username: admin"
 if [[ "$PASSWORD_ROTATED" == "true" ]]; then
@@ -126,6 +113,13 @@ elif [[ -n "$GENERATED_PASSWORD" ]]; then
   echo "Generated password: ${GENERATED_PASSWORD}"
 else
   echo "Password: unchanged in ${APP_DIR}/.env"
-  echo "Change password: sudo ${APP_DIR}/scripts/change-password.sh"
+  echo "Change password: vrcloud newpassword"
 fi
-echo "Status: systemctl status vrcloud-ide"
+echo
+echo "Commands:"
+echo "  vrcloud start"
+echo "  vrcloud stop"
+echo "  vrcloud restart"
+echo "  vrcloud status"
+echo "  vrcloud password"
+echo "  vrcloud newpassword"

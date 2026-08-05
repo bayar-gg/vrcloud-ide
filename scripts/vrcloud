@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+APP_DIR="${VRCLOUD_APP_DIR:-/opt/vrcloud-ide}"
+SERVICE="${VRCLOUD_SERVICE:-vrcloud-ide}"
+ENV_FILE="${VRCLOUD_ENV_FILE:-$APP_DIR/.env}"
+PORT="${PORT:-1337}"
+
+usage() {
+  cat <<'EOF'
+VRCloud IDE service manager
+
+Usage:
+  vrcloud start                 Start service and wait until ready
+  vrcloud stop                  Stop service
+  vrcloud restart               Restart service and wait until ready
+  vrcloud status                Show service status
+  vrcloud logs                  Follow service logs
+  vrcloud password              Show login username and password
+  vrcloud newpassword           Set a new password interactively
+  vrcloud newpassword --generate
+                                Generate and display a random password
+  vrcloud help                  Show this help
+EOF
+}
+
+require_root() {
+  if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
+    echo "This command requires root. Run: sudo vrcloud $*" >&2
+    exit 1
+  fi
+}
+
+env_value() {
+  local key="$1"
+  awk -F= -v key="$key" '$1 == key { print substr($0, index($0, "=") + 1); exit }' "$ENV_FILE"
+}
+
+wait_ready() {
+  local port
+  port="$(systemctl show "$SERVICE" -p Environment --value | tr ' ' '\n' |
+    awk -F= '$1 == "PORT" { print $2; exit }')"
+  port="${port:-$PORT}"
+  for _ in $(seq 1 30); do
+    if curl -fsS -o /dev/null "http://127.0.0.1:${port}/login"; then
+      local ip
+      ip="$(hostname -I | awk '{print $1}')"
+      echo "VRCloud IDE is running: http://${ip}:${port}/"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "VRCloud IDE failed to become ready." >&2
+  systemctl status "$SERVICE" --no-pager >&2 || true
+  journalctl -u "$SERVICE" -n 100 --no-pager >&2 || true
+  return 1
+}
+
+command="${1:-help}"
+shift || true
+
+case "$command" in
+  start)
+    require_root start
+    systemctl start "$SERVICE"
+    wait_ready
+    ;;
+  stop)
+    require_root stop
+    systemctl stop "$SERVICE"
+    echo "VRCloud IDE stopped."
+    ;;
+  restart)
+    require_root restart
+    systemctl restart "$SERVICE"
+    wait_ready
+    ;;
+  status)
+    systemctl status "$SERVICE" --no-pager
+    ;;
+  logs)
+    journalctl -u "$SERVICE" -f
+    ;;
+  password)
+    require_root password
+    [[ -f "$ENV_FILE" ]] || { echo "Environment file not found: $ENV_FILE" >&2; exit 1; }
+    echo "Username: $(env_value AUTH_USER)"
+    echo "Password: $(env_value AUTH_PASS)"
+    ;;
+  newpassword)
+    require_root newpassword
+    if [[ "${1:-}" == "--generate" ]]; then
+      exec env APP_DIR="$APP_DIR" ENV_FILE="$ENV_FILE" VRCLOUD_SERVICE="$SERVICE" \
+        "$APP_DIR/scripts/change-password.sh" --generate
+    fi
+    exec env APP_DIR="$APP_DIR" ENV_FILE="$ENV_FILE" VRCLOUD_SERVICE="$SERVICE" \
+      "$APP_DIR/scripts/change-password.sh"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $command" >&2
+    usage >&2
+    exit 1
+    ;;
+esac

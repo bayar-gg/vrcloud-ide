@@ -58,13 +58,14 @@ This single command automatically:
 5. Creates the workspace at `/srv/vrcloud-workspace`.
 6. Installs all production npm dependencies.
 7. Generates a secure `.env`, random login password, and cookie signing secret.
-8. Installs/enables the always-on systemd service.
-9. Starts and verifies the complete installation.
+8. Installs/enables the systemd service but leaves it stopped.
+9. Installs the `vrcloud` management command and prints start/stop/login help.
 
-When it finishes, the installer prints the generated username, password, and
-URL:
+When it finishes, the installer prints the generated username/password and
+service commands. Start it manually, then open:
 
 ```text
+vrcloud start
 http://YOUR_SERVER_IP:1337/
 ```
 
@@ -86,34 +87,45 @@ update. Repository ownership is handled with a per-command `safe.directory`
 override; the installer does not modify global Git configuration.
 
 When upgrading from an older HTTPS/Certbot installer, it automatically resets
-`COOKIE_SECURE=false`, rewrites the bind address to `0.0.0.0`, restarts the
-already-running service, and waits for the localhost health check before
-printing the public URL.
+`COOKIE_SECURE=false`, rewrites the bind address to `0.0.0.0`, installs the
+new service definition, and leaves the service stopped for manual startup.
+
+## VRCloud Service Commands
+
+```bash
+vrcloud start
+vrcloud stop
+vrcloud restart
+vrcloud status
+vrcloud logs
+```
+
+`vrcloud start` waits until the login page is ready and prints the URL. Run
+commands with `sudo` when the current shell is not root.
 
 ## Login Credentials and Password Reset
 
-The initial installer prints the generated password once. Existing credentials
-can be viewed directly on the VPS:
+View the current login:
 
 ```bash
-sudo awk -F= '/^AUTH_(USER|PASS)=/{print $1"="$2}' /opt/vrcloud-ide/.env
+vrcloud password
 ```
 
 Set your own password interactively:
 
 ```bash
-sudo /opt/vrcloud-ide/scripts/change-password.sh
+vrcloud newpassword
 ```
 
-Or generate and display a new strong password with one command:
+Generate and display a new strong password:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/change-password.sh \
-  | sudo bash -s -- --generate
+vrcloud newpassword --generate
 ```
 
 The password script also rotates `AUTH_SECRET`, invalidates all existing login
-cookies, preserves `.env` ownership/mode, and restarts the service.
+cookies, preserves `.env` ownership/mode, and restarts the service only when it
+was already running.
 
 ## Tested Environment
 
@@ -158,7 +170,7 @@ The installer:
 3. Creates the restricted `vrcloud` service account.
 4. Creates `/srv/vrcloud-workspace`.
 5. Generates `.env` with a strong random password and signing secret.
-6. Installs and starts `vrcloud-ide.service`.
+6. Installs/enables `vrcloud-ide.service` and leaves it stopped.
 
 Open:
 

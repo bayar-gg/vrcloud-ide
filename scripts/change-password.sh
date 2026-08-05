@@ -79,16 +79,19 @@ SERVICE="${VRCLOUD_SERVICE:-vrcloud-ide}"
 if ! systemctl cat "$SERVICE" >/dev/null 2>&1; then
   SERVICE="cloud9-clone"
 fi
-systemctl restart "$SERVICE"
-
-for _ in $(seq 1 30); do
-  if systemctl is-active --quiet "$SERVICE"; then break; fi
-  sleep 1
-done
-systemctl is-active --quiet "$SERVICE" || {
-  systemctl status "$SERVICE" --no-pager >&2 || true
-  exit 1
-}
+if systemctl is-active --quiet "$SERVICE"; then
+  systemctl restart "$SERVICE"
+  for _ in $(seq 1 30); do
+    if systemctl is-active --quiet "$SERVICE"; then break; fi
+    sleep 1
+  done
+  systemctl is-active --quiet "$SERVICE" || {
+    systemctl status "$SERVICE" --no-pager >&2 || true
+    exit 1
+  }
+else
+  echo "Service is stopped; the new password will apply on the next start."
+fi
 
 USERNAME="$(awk -F= '$1 == "AUTH_USER" { print substr($0, index($0, "=") + 1); exit }' "$ENV_FILE")"
 echo "VRCloud IDE password updated. Existing login sessions were invalidated."
