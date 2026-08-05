@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRCloud IDE</title>
+  <link rel="stylesheet" href="/vendor/xterm/css/xterm.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="menubar">
+    <span class="logo">&#9729; VRCloud IDE</span>
+    <div class="menu" data-menu="file">File</div>
+    <div class="menu" data-menu="edit">Edit</div>
+    <div class="menu" data-menu="find">Find</div>
+    <div class="menu" data-menu="view">View</div>
+    <div class="menu" data-menu="goto">Goto</div>
+    <div class="menu" data-menu="run">Run</div>
+    <div class="menu" data-menu="tools">Tools</div>
+    <div class="menu" data-menu="window">Window</div>
+    <span class="mb-run" data-act="run">&#9654; Run</span>
+    <span id="sync-status" class="sync-status offline" title="Realtime session">Offline</span>
+    <span id="gear" title="Preferences">&#9881; Preferences</span>
+    <form class="logout-form" action="/logout" method="post"><button type="submit" title="Logout">Logout</button></form>
+    <span id="ws-name"></span>
+  </div>
+  <div id="menu-pop" class="menu-pop"></div>
+
+  <div id="main">
+    <!-- Activity bar ala Cloud9 -->
+    <div id="activitybar">
+      <div class="act active" data-view="workspace">Workspace</div>
+      <div class="act" data-view="navigate">Navigate</div>
+      <div class="act" data-view="search">Search</div>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div id="openfiles-wrap">
+        <div class="pane-head">OPEN FILES</div>
+        <ul id="openlist"></ul>
+      </div>
+      <div id="fav-wrap">
+        <div class="pane-head">FAVORITES</div>
+        <ul id="favlist" class="tree"></ul>
+      </div>
+      <div class="pane-head">WORKSPACE
+        <span class="ph-actions">
+          <span id="tree-gear" title="Opsi">&#9881;</span>
+          <span id="tree-refresh" title="Refresh">&#8635;</span>
+        </span>
+      </div>
+      <ul id="filetree" class="tree"></ul>
+      <div id="drop-hint">Lepas file di sini untuk upload</div>
+    </div>
+    <div id="drag-x" class="dragbar-v"></div>
+
+    <div id="content">
+      <div id="workarea"></div>
+    </div>
+  </div>
+  <div id="tree-gear-menu" class="context-menu"></div>
+
+  <div id="statusbar">
+    <span id="status-file">siap</span>
+    <span id="status-right"></span>
+  </div>
+
+  <!-- Context menu -->
+  <div id="ctx" class="context-menu"></div>
+
+  <!-- Modal pencarian -->
+  <div id="search-modal" class="modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span id="search-scope">Cari di workspace</span>
+        <span id="search-close" class="modal-x">&times;</span>
+      </div>
+      <div class="modal-row">
+        <input id="search-input" type="text" placeholder="Ketik teks lalu Enter…" autocomplete="off" />
+        <button id="search-go">Cari</button>
+      </div>
+      <div id="search-results"></div>
+    </div>
+  </div>
+
+  <!-- Prompt overlay (pengganti prompt bawaan yang minimalis) -->
+  <div id="prompt-modal" class="modal">
+    <div class="modal-box small">
+      <div class="modal-head"><span id="prompt-title">Input</span><span id="prompt-close" class="modal-x">&times;</span></div>
+      <div class="modal-row"><input id="prompt-input" type="text" autocomplete="off" /></div>
+      <div class="modal-actions"><button id="prompt-cancel">Batal</button><button id="prompt-ok" class="primary">OK</button></div>
+    </div>
+  </div>
+
+  <!-- Preferences -->
+  <div id="prefs-modal" class="modal">
+    <div class="modal-box">
+      <div class="modal-head"><span>Preferences</span><span id="prefs-close" class="modal-x">&times;</span></div>
+      <div class="prefs-body">
+        <div class="pref-row">
+          <label>Flat Theme:</label>
+          <div class="swatches">
+            <div class="sw" data-theme="flat-dark" style="background:#16232e" title="Flat Dark"></div>
+            <div class="sw" data-theme="flat-light" style="background:#e6e6e6" title="Flat Light"></div>
+          </div>
+        </div>
+        <div class="pref-row">
+          <label>Classic Theme:</label>
+          <div class="swatches">
+            <div class="sw" data-theme="classic-dark" style="background:#1e1e1e" title="Classic Dark"></div>
+            <div class="sw" data-theme="classic-gray" style="background:#3a3a3a" title="Classic Gray"></div>
+          </div>
+        </div>
+        <div class="pref-row">
+          <label>Syntax Theme:</label>
+          <select id="syntax-theme"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input id="file-input" type="file" multiple style="display:none" />
+
+  <script src="/vendor/ace/ace.js"></script>
+  <script src="/vendor/ace/ext-language_tools.js"></script>
+  <script src="/vendor/ace/ext-modelist.js"></script>
+  <script src="/vendor/xterm/lib/xterm.js"></script>
+  <script src="/vendor/xterm-fit/xterm-addon-fit.js"></script>
+  <script src="/js/sync-client.js?v=vrcloud3"></script>
+  <script src="/js/app.js?v=vrcloud3"></script>
+</body>
+</html>

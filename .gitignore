@@ -1,0 +1,6 @@
+.env
+data/session.json
+data/session.json.tmp
+.c9rc
+node_modules/
+npm-debug.log*

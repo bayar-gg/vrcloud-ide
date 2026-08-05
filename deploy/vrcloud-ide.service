@@ -1,0 +1,24 @@
+[Unit]
+Description=VRCloud IDE (persistent realtime web IDE)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=vrcloud
+Group=vrcloud
+WorkingDirectory=/opt/vrcloud-ide
+EnvironmentFile=/opt/vrcloud-ide/.env
+Environment=PORT=1337
+Environment=WORKSPACE=/srv/vrcloud-workspace
+ExecStart=/usr/bin/env node /opt/vrcloud-ide/server.js
+Restart=always
+RestartSec=3
+KillMode=process
+TimeoutStopSec=15
+LimitNOFILE=65536
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — VRCloud IDE</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0d1720; --panel:#172734; --line:#294358;
+      --text:#d7e2eb; --dim:#8195a4; --accent:#4389bd; --danger:#ef7c7c; }
+    * { box-sizing:border-box; }
+    body { min-height:100vh; margin:0; display:grid; place-items:center; overflow:hidden;
+      font-family:"Segoe UI",Ubuntu,Arial,sans-serif; color:var(--text);
+      background:radial-gradient(circle at 50% 20%,#1f3c52 0,#10212d 35%,var(--bg) 75%); }
+    body::before { content:""; position:fixed; inset:0; opacity:.16; pointer-events:none;
+      background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+      background-size:28px 28px; }
+    .card { position:relative; width:min(410px,calc(100vw - 34px)); padding:34px 34px 30px;
+      background:rgba(23,39,52,.95); border:1px solid var(--line); border-radius:12px;
+      box-shadow:0 24px 70px rgba(0,0,0,.48); }
+    .brand { display:flex; align-items:center; justify-content:center; gap:11px;
+      margin-bottom:8px; font-size:28px; font-weight:700; letter-spacing:.2px; }
+    .cloud { color:#77b7e3; filter:drop-shadow(0 0 10px rgba(85,160,210,.35)); }
+    .subtitle { margin:0 0 27px; text-align:center; color:var(--dim); font-size:13px; }
+    label { display:block; margin:15px 0 7px; color:#b9c8d3; font-size:12px; font-weight:600; }
+    input { width:100%; border:1px solid var(--line); border-radius:6px; padding:11px 12px;
+      background:#0c1821; color:var(--text); outline:none; font-size:14px; }
+    input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(67,137,189,.2); }
+    button { width:100%; margin-top:23px; padding:11px; border:0; border-radius:6px;
+      color:white; background:linear-gradient(#4c95c8,#3377a7); font-size:14px;
+      font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(25,90,135,.35); }
+    button:hover { filter:brightness(1.08); }
+    .error { display:none; margin:0 0 15px; padding:9px 11px; border-radius:5px;
+      color:#ffd1d1; background:rgba(190,55,55,.2); border:1px solid rgba(239,124,124,.35);
+      font-size:12px; text-align:center; }
+    .foot { margin-top:20px; text-align:center; color:var(--dim); font-size:11px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand"><span class="cloud">&#9729;</span><span>VRCloud IDE</span></div>
+    <p class="subtitle">Masuk untuk mengakses workspace development</p>
+    <div id="error" class="error">Username atau password salah.</div>
+    <form method="post" action="/login" autocomplete="on">
+      <label for="username">USERNAME</label>
+      <input id="username" name="username" type="text" autocomplete="username" required autofocus />
+      <label for="password">PASSWORD</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+      <button type="submit">Masuk ke VRCloud IDE</button>
+    </form>
+    <div class="foot">Secure shared workspace &middot; Persistent realtime session</div>
+  </main>
+  <script>
+    if (new URLSearchParams(location.search).has("error"))
+      document.getElementById("error").style.display = "block";
+  </script>
+</body>
+</html>
