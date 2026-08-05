@@ -856,7 +856,7 @@
   const typing = () => { const a = document.activeElement; return a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT" || (a.className && String(a.className).indexOf("ace_") >= 0)); };
   async function goToLineDlg() {
     const ed = activeEditor();
-    if (!ed) return setStatus("Alt+G: pilih tab file terlebih dahulu");
+    if (!ed) return setStatus("Ctrl+G: pilih tab file terlebih dahulu");
     const current = ed.getCursorPosition().row + 1;
     const value = await promptDlg("Go To Line (nomor baris):", String(current));
     if (value == null) return;
@@ -868,7 +868,7 @@
     const k = e.key.toLowerCase();
     if (e.key === "F6") { e.preventDefault(); addTerminal(); return; }
     if ((e.ctrlKey || e.metaKey) && k === "s") { e.preventDefault(); saveActive(); return; }
-    if (e.altKey && k === "g") { e.preventDefault(); goToLineDlg(); return; }
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === "g") { e.preventDefault(); goToLineDlg(); return; }
     if (e.altKey && k === "l") { e.preventDefault(); addTerminal(null, curDir()); return; }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === "f") { e.preventDefault(); openSearch(curDir()); return; }
     if ((e.ctrlKey || e.metaKey) && !typing() && selNode) {
@@ -1051,7 +1051,7 @@
       { label: "Wrap To Print Margin", check: ui.wrapMargin, act: () => toggleUI("wrapMargin") },
     ],
     goto: () => [
-      { label: "Go To Line…", key: "Alt-G", act: goToLineDlg },
+      { label: "Go To Line…", key: "Ctrl-G", act: goToLineDlg },
       { label: "Go To File…", act: () => promptDlg("Buka file (path relatif):", "").then((p) => { if (p) openFile(p, basename(p)); }) },
     ],
     run: () => [

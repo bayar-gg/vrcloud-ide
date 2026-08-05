@@ -197,7 +197,7 @@ vrcloudproject@hostname:/workspace/path#
 
 - `Ctrl+S`: save active file.
 - `Ctrl+Shift+F`: search in files.
-- `Alt+G`: go to line.
+- `Ctrl+G`: go to line.
 - `Alt+L`: open terminal in the selected directory.
 - `F6`: create a terminal.
 - Drag tab to pane center: move tab.
