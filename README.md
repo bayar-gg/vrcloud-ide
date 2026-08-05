@@ -17,7 +17,8 @@ multi-browser collaboration in one Node.js application.
 - Atomic session persistence in `data/session.json`; closing the browser does
   not discard open files, unsaved buffers, layout, or running terminals.
 - File manager with create, rename, delete, copy, paste, duplicate, search,
-  upload, download, favorites, hidden files, and context menus.
+  upload, download, favorites, hidden files, multi-selection, ZIP/TAR creation,
+  archive download/extraction, and context menus.
 - Signed HttpOnly login cookie, login throttling, path traversal protection,
   and authenticated HTTP/WebSocket endpoints.
 - Always-on systemd deployment with automatic restart.
@@ -60,7 +61,7 @@ sudo bash scripts/install-systemd.sh
 
 The installer:
 
-1. Installs `tmux`, Nginx, Git, build tools, and CA certificates.
+1. Installs `tmux`, ZIP/TAR tools, Nginx, Git, build tools, and CA certificates.
 2. Installs production npm dependencies.
 3. Creates the restricted `vrcloud` service account.
 4. Creates `/srv/vrcloud-workspace`.
@@ -84,7 +85,7 @@ Install system dependencies:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y tmux nginx snapd git build-essential python3 ca-certificates
+sudo apt-get install -y tmux zip unzip nginx snapd git build-essential python3 ca-certificates
 ```
 
 Install project dependencies:
@@ -193,6 +194,8 @@ Every new terminal opens directly with a Kali-inspired two-line prompt:
 - `Ctrl+G`: go to line.
 - `Alt+L`: open terminal in the selected directory.
 - `F6`: create a terminal.
+- `Ctrl`/`Cmd` + click in file tree: toggle file/folder selection.
+- `Shift` + click in file tree: select a visible range.
 - Drag tab to pane center: move tab.
 - Drag tab to pane edge: create split.
 

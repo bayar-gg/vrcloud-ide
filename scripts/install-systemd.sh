@@ -19,7 +19,7 @@ command -v npm >/dev/null || { echo "npm is required." >&2; exit 1; }
 
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  tmux git build-essential python3 ca-certificates curl nginx snapd
+  tmux zip unzip git build-essential python3 ca-certificates curl nginx snapd
 
 if ! id "$SERVICE_USER" >/dev/null 2>&1; then
   useradd --system --create-home --shell /bin/bash "$SERVICE_USER"

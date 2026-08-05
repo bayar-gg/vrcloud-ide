@@ -30,6 +30,8 @@
   let activeLeaf = null;
   let DRAG = null;           // { leaf, tabId } saat drag tab
   let selNode = null;
+  const selectedTreeItems = new Map();
+  let selectionAnchorPath = null;
   let clipboard = null;
   const sync = new C9SyncClient();
   const TERMINAL_META = {};
@@ -733,14 +735,71 @@
     row.innerHTML = '<span class="twist">' + (it.dir ? "&#9656;" : "") + '</span><span class="ic ' + (it.dir ? "ic-dir" : "ic-file") + '">' + (it.dir ? "&#128193;" : "&#128196;") + '</span><span class="nm"></span>';
     row.querySelector(".nm").textContent = it.name;
     li.appendChild(row);
-    row.addEventListener("click", (e) => { e.stopPropagation(); select(li); if (it.dir) toggleDir(li); else openFile(it.path, it.name); });
-    row.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); select(li); showCtx(e, it); });
+    if (selectedTreeItems.has(it.path)) li.classList.add("sel");
+    row.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const modified = e.ctrlKey || e.metaKey || e.shiftKey;
+      select(li, e);
+      if (modified) return;
+      if (it.dir) toggleDir(li); else openFile(it.path, it.name);
+    });
+    row.addEventListener("contextmenu", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (!selectedTreeItems.has(it.path)) select(li);
+      else selNode = nodeInfo(li);
+      showCtx(e, it);
+    });
     return li;
   }
-  function select(li) {
-    document.querySelectorAll("#filetree li.sel,#favlist li.sel").forEach((x) => x.classList.remove("sel"));
-    if (li) li.classList.add("sel");
-    selNode = li ? { path: li.dataset.path, name: li.dataset.name, dir: li.dataset.dir === "1" } : null;
+  function nodeInfo(li) {
+    return li ? { path: li.dataset.path, name: li.dataset.name, dir: li.dataset.dir === "1" } : null;
+  }
+  function paintTreeSelection() {
+    document.querySelectorAll("#filetree li[data-path]").forEach((li) => {
+      li.classList.toggle("sel", selectedTreeItems.has(li.dataset.path));
+    });
+  }
+  function selectedItems() {
+    return Array.from(selectedTreeItems.values());
+  }
+  function topLevelItems(items) {
+    return items.filter((item) => !items.some((parent) =>
+      parent !== item && parent.dir && item.path.startsWith(parent.path + "/")
+    ));
+  }
+  function select(li, event) {
+    if (!li) {
+      selectedTreeItems.clear(); selectionAnchorPath = null; selNode = null;
+      paintTreeSelection(); return;
+    }
+    const item = nodeInfo(li);
+    const toggle = !!(event && (event.ctrlKey || event.metaKey));
+    const range = !!(event && event.shiftKey);
+    if (range && selectionAnchorPath) {
+      const nodes = Array.from(document.querySelectorAll("#filetree li[data-path]"));
+      const start = nodes.findIndex((node) => node.dataset.path === selectionAnchorPath);
+      const end = nodes.indexOf(li);
+      if (!toggle) selectedTreeItems.clear();
+      if (start >= 0 && end >= 0) {
+        const low = Math.min(start, end), high = Math.max(start, end);
+        for (let i = low; i <= high; i++) {
+          const info = nodeInfo(nodes[i]);
+          selectedTreeItems.set(info.path, info);
+        }
+      } else selectedTreeItems.set(item.path, item);
+    } else if (toggle) {
+      if (selectedTreeItems.has(item.path)) selectedTreeItems.delete(item.path);
+      else selectedTreeItems.set(item.path, item);
+      selectionAnchorPath = item.path;
+    } else {
+      selectedTreeItems.clear();
+      selectedTreeItems.set(item.path, item);
+      selectionAnchorPath = item.path;
+    }
+    selNode = selectedTreeItems.has(item.path) ? item :
+      (selectedItems().length ? selectedItems()[selectedItems().length - 1] : null);
+    paintTreeSelection();
+    setStatus(selectedTreeItems.size > 1 ? selectedTreeItems.size + " items selected" : (selNode ? selNode.path : "siap"));
   }
   async function toggleDir(li) {
     let sub = li.querySelector(":scope > ul"); const tw = li.querySelector(".twist");
@@ -786,17 +845,85 @@
   async function doPaste(destDir) {
     if (!clipboard) return;
     try {
-      if (clipboard.mode === "cut") { await api.post("/api/rename", { from: clipboard.path, to: destDir + "/" + basename(clipboard.path) }); clipboard = null; }
-      else await api.post("/api/copy", { from: clipboard.path, to: destDir });
+      const paths = clipboard.paths || [clipboard.path];
+      for (const source of paths) {
+        if (clipboard.mode === "cut") {
+          await api.post("/api/rename", { from: source, to: (destDir ? destDir + "/" : "") + basename(source) });
+        } else await api.post("/api/copy", { from: source, to: destDir });
+      }
+      if (clipboard.mode === "cut") clipboard = null;
       sync.send({ type: "fs-change", path: destDir });
       refreshNode(destDir); refreshTree();
     } catch (e) { alert("Paste gagal: " + e.message); }
   }
   async function doDuplicate(p) { try { const r = await api.post("/api/duplicate", { path: p }); sync.send({ type: "fs-change", path: parentOf(p) }); refreshNode(parentOf(p)); setStatus("digandakan: " + r.path); } catch (e) { alert("Gagal: " + e.message); } }
-  async function doDelete(it) { if (!confirm("Hapus '" + it.name + "'?")) return; try { await api.post("/api/delete", { path: it.path }); sync.send({ type: "fs-change", path: parentOf(it.path) }); closePathEverywhere(it.path); walkLeaves(layout, (l) => l.tabs.slice().forEach((t) => { if (t.kind === "file" && t.path.startsWith(it.path + "/")) closeTab(l, t.id); })); refreshNode(parentOf(it.path)); } catch (e) { alert("Gagal: " + e.message); } }
+  async function doDeleteMany(items) {
+    items = topLevelItems(items);
+    if (!items.length || !confirm("Hapus " + items.length + " item terpilih?")) return;
+    try {
+      for (const it of items) {
+        await api.post("/api/delete", { path: it.path });
+        closePathEverywhere(it.path);
+        walkLeaves(layout, (l) => l.tabs.slice().forEach((t) => {
+          if (t.kind === "file" && t.path.startsWith(it.path + "/")) closeTab(l, t.id);
+        }));
+      }
+      const refreshAt = items.every((x) => parentOf(x.path) === parentOf(items[0].path)) ? parentOf(items[0].path) : "";
+      selectedTreeItems.clear(); selNode = null; selectionAnchorPath = null;
+      sync.send({ type: "fs-change", path: refreshAt });
+      refreshNode(refreshAt); refreshTree();
+    } catch (e) { alert("Gagal: " + e.message); }
+  }
+  async function doDelete(it) { return doDeleteMany([it]); }
   async function doRename(it) { const n = await promptDlg("Nama baru:", it.name); if (!n) return; try { const to = (parentOf(it.path) ? parentOf(it.path) + "/" : "") + n; await api.post("/api/rename", { from: it.path, to }); sync.send({ type: "fs-change", path: parentOf(it.path) }); refreshNode(parentOf(it.path)); } catch (e) { alert("Gagal: " + e.message); } }
   function copyPath(it, absolute) { const p = absolute ? INFO.workspace + "/" + it.path : it.path; navigator.clipboard.writeText(p).then(() => setStatus("path disalin: " + p), () => setStatus("path: " + p)); }
   function download(it) { const a = document.createElement("a"); a.href = "/api/download?path=" + enc(it.path); a.download = it.name; document.body.appendChild(a); a.click(); a.remove(); }
+  function archiveDestination(items) {
+    const parent = parentOf(items[0].path);
+    return items.every((item) => parentOf(item.path) === parent) ? parent : "";
+  }
+  function archiveDefaultName(items) {
+    return items.length === 1 ? basename(items[0].path).replace(/\.(zip|tar|tgz|tar\.gz)$/i, "") : "archive-" + items.length + "-items";
+  }
+  async function makeArchive(items, format) {
+    const name = await promptDlg("Nama arsip " + format.toUpperCase() + ":", archiveDefaultName(items));
+    if (!name) return;
+    const dest = archiveDestination(items);
+    try {
+      const result = await api.post("/api/archive", { paths: items.map((x) => x.path), format, name, dest });
+      sync.send({ type: "fs-change", path: dest });
+      await refreshNode(dest); refreshTree();
+      setStatus("Arsip dibuat: " + result.path);
+    } catch (e) { alert("Gagal membuat arsip: " + e.message); }
+  }
+  async function downloadArchive(items, format) {
+    try {
+      setStatus("Menyiapkan download " + format.toUpperCase() + "…");
+      const response = await fetch("/api/archive-download", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paths: items.map((x) => x.path), format, name: archiveDefaultName(items) }),
+      });
+      if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || response.status);
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const name = match ? match[1] : archiveDefaultName(items) + (format === "zip" ? ".zip" : ".tar.gz");
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob); link.download = name;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      setStatus("Download siap: " + name);
+    } catch (e) { alert("Gagal download arsip: " + e.message); }
+  }
+  async function extractArchive(it) {
+    try {
+      const result = await api.post("/api/extract", { path: it.path });
+      sync.send({ type: "fs-change", path: parentOf(it.path) });
+      await refreshNode(parentOf(it.path)); refreshTree();
+      setStatus("Extract selesai: " + result.path);
+    } catch (e) { alert("Gagal extract: " + e.message); }
+  }
+  const isArchive = (name) => /\.(zip|tar|tar\.gz|tgz)$/i.test(name);
   function preview(it) { window.open("/preview/" + it.path.split("/").map(enc).join("/"), "_blank"); }
 
   // ===== Favorites =====
@@ -838,8 +965,10 @@
   function placeCtx(e) { ctx.style.display = "block"; const w = ctx.offsetWidth, h = ctx.offsetHeight; ctx.style.left = Math.min(e.clientX, innerWidth - w - 6) + "px"; ctx.style.top = Math.min(e.clientY, innerHeight - h - 6) + "px"; }
   function showCtx(e, it) {
     ctx.innerHTML = "";
+    const items = selectedItems();
+    const single = items.length === 1;
     const dirForNew = it.dir ? it.path : parentOf(it.path);
-    const runnable = !it.dir && ["py", "js", "sh"].includes(it.name.split(".").pop().toLowerCase());
+    const runnable = single && !it.dir && ["py", "js", "sh"].includes(it.name.split(".").pop().toLowerCase());
     const add = (label, fn, opt) => {
       opt = opt || {};
       if (opt.sep) { const s = document.createElement("div"); s.className = "sep"; ctx.appendChild(s); }
@@ -848,22 +977,28 @@
       if (!opt.disabled) d.addEventListener("click", () => { hideCtx(); fn(); });
       ctx.appendChild(d);
     };
-    add("Open", () => (it.dir ? expandPath(it.path) : openFile(it.path, it.name)));
-    add("Download", () => download(it));
+    if (items.length > 1) add(items.length + " items selected", () => {}, { disabled: true });
+    add("Open", () => (it.dir ? expandPath(it.path) : openFile(it.path, it.name)), { disabled: !single });
+    add("Download", () => download(it), { disabled: !single });
+    add("Download as ZIP", () => downloadArchive(items, "zip"), { sep: true });
+    add("Download as TAR.GZ", () => downloadArchive(items, "tar.gz"));
+    add("Compress to ZIP…", () => makeArchive(items, "zip"), { sep: true });
+    add("Compress to TAR.GZ…", () => makeArchive(items, "tar.gz"));
+    add("Extract Here", () => extractArchive(it), { disabled: !single || !isArchive(it.name) });
     add("Run", () => runFile(it.path), { disabled: !runnable });
-    add("Preview", () => preview(it), { disabled: it.dir });
+    add("Preview", () => preview(it), { disabled: !single || it.dir });
     add("Refresh", () => refreshNode(it.dir ? it.path : parentOf(it.path)), { sep: true });
-    add("Rename", () => doRename(it));
-    add("Delete", () => doDelete(it));
-    add("Cut", () => (clipboard = { mode: "cut", path: it.path }), { sep: true, key: "Ctrl-X" });
-    add("Copy", () => (clipboard = { mode: "copy", path: it.path }), { key: "Ctrl-C" });
+    add("Rename", () => doRename(it), { disabled: !single });
+    add("Delete", () => doDeleteMany(items));
+    add("Cut", () => (clipboard = { mode: "cut", paths: topLevelItems(items).map((x) => x.path) }), { sep: true, key: "Ctrl-X" });
+    add("Copy", () => (clipboard = { mode: "copy", paths: topLevelItems(items).map((x) => x.path) }), { key: "Ctrl-C" });
     add("Paste", () => doPaste(dirForNew), { key: "Ctrl-V", disabled: !clipboard });
-    add("Duplicate", () => doDuplicate(it.path));
-    add("Copy file path", () => copyPath(it, false), { sep: true });
-    add("Copy absolute path", () => copyPath(it, true));
-    add("Add to Favorites", () => addFav(it), { sep: true });
-    add("Open Terminal Here", () => addTerminal(null, dirForNew), { key: "Alt-L" });
-    add("Search In This Folder", () => openSearch(dirForNew), { key: "Ctrl-Shift-F" });
+    add("Duplicate", () => doDuplicate(it.path), { disabled: !single });
+    add("Copy file path", () => copyPath(it, false), { sep: true, disabled: !single });
+    add("Copy absolute path", () => copyPath(it, true), { disabled: !single });
+    add("Add to Favorites", () => addFav(it), { sep: true, disabled: !single });
+    add("Open Terminal Here", () => addTerminal(null, dirForNew), { key: "Alt-L", disabled: !single });
+    add("Search In This Folder", () => openSearch(dirForNew), { key: "Ctrl-Shift-F", disabled: !single });
     add("New File", () => newEntry(false, dirForNew), { sep: true });
     add("New Folder", () => newEntry(true, dirForNew));
     placeCtx(e);
@@ -902,11 +1037,12 @@
     if (e.altKey && k === "l") { e.preventDefault(); addTerminal(null, curDir()); return; }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === "f") { e.preventDefault(); openSearch(curDir()); return; }
     if ((e.ctrlKey || e.metaKey) && !typing() && selNode) {
-      if (k === "x") { e.preventDefault(); clipboard = { mode: "cut", path: selNode.path }; }
-      else if (k === "c") { e.preventDefault(); clipboard = { mode: "copy", path: selNode.path }; }
+      const paths = topLevelItems(selectedItems()).map((item) => item.path);
+      if (k === "x") { e.preventDefault(); clipboard = { mode: "cut", paths }; }
+      else if (k === "c") { e.preventDefault(); clipboard = { mode: "copy", paths }; }
       else if (k === "v") { e.preventDefault(); doPaste(selNode.dir ? selNode.path : parentOf(selNode.path)); }
     }
-    if (k === "delete" && !typing() && selNode) doDelete({ path: selNode.path, name: selNode.name });
+    if (k === "delete" && !typing() && selNode) doDeleteMany(selectedItems());
   });
 
   // ============================================================

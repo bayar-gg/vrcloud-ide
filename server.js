@@ -18,6 +18,7 @@ const path = require("path");
 const fs = require("fs");
 const http = require("http");
 const crypto = require("crypto");
+const os = require("os");
 const { spawn, execFileSync } = require("child_process");
 const express = require("express");
 const mime = require("mime-types");
@@ -180,6 +181,56 @@ function rmPath(p) {
   else fs.unlinkSync(p);
 }
 
+function archivePaths(values) {
+  if (!Array.isArray(values) || values.length < 1 || values.length > 500) {
+    throw new Error("Pilih 1 sampai 500 file/folder");
+  }
+  const unique = Array.from(new Set(values.map((value) => {
+    const normalized = rel(safe(String(value || "")));
+    if (!normalized) throw new Error("Root workspace tidak dapat dipilih sebagai item arsip");
+    return normalized;
+  })));
+  return unique.filter((item) => !unique.some((parent) => {
+    if (parent === item || !item.startsWith(parent + "/")) return false;
+    try { return fs.statSync(safe(parent)).isDirectory(); } catch (e) { return false; }
+  }));
+}
+function archiveExtension(format) {
+  if (format === "zip") return ".zip";
+  if (format === "tar.gz") return ".tar.gz";
+  throw new Error("Format arsip tidak didukung");
+}
+function createArchive(paths, format, output) {
+  const parents = paths.map((item) => path.posix.dirname(item));
+  const sameParent = parents.every((parent) => parent === parents[0]);
+  const cwd = sameParent ? safe(parents[0] === "." ? "" : parents[0]) : WORKSPACE;
+  const entries = sameParent ? paths.map((item) => path.posix.basename(item)) : paths;
+  if (format === "zip") {
+    execFileSync("zip", ["-q", "-r", output, "--"].concat(entries), {
+      cwd, timeout: 10 * 60 * 1000, maxBuffer: 20 * 1024 * 1024,
+    });
+  } else {
+    execFileSync("tar", ["-czf", output, "-C", cwd, "--"].concat(entries), {
+      timeout: 10 * 60 * 1000, maxBuffer: 20 * 1024 * 1024,
+    });
+  }
+}
+function validateArchiveEntries(file, type) {
+  const command = type === "zip" ? "unzip" : "tar";
+  const args = type === "zip" ? ["-Z1", file] : ["-tf", file];
+  const output = execFileSync(command, args, {
+    encoding: "utf8", timeout: 60 * 1000, maxBuffer: 20 * 1024 * 1024,
+  });
+  output.split(/\r?\n/).filter(Boolean).forEach((entry) => {
+    const clean = entry.replace(/\\/g, "/");
+    const normalized = path.posix.normalize(clean);
+    if (clean[0] === "/" || normalized === ".." || normalized.startsWith("../") ||
+        /^[a-zA-Z]:\//.test(clean) || clean.includes("\0")) {
+      throw new Error("Arsip mengandung path tidak aman: " + entry);
+    }
+  });
+}
+
 const store = new SessionStore(path.join(__dirname, "data", "session.json"));
 
 // ---- Static: frontend + vendor (Ace, xterm) -------------------------------
@@ -294,6 +345,61 @@ app.post("/api/duplicate", (req, res) => {
     const to = uniquePath(path.join(path.dirname(from), path.basename(from)));
     execFileSync("cp", ["-a", from, to]);
     res.json({ ok: true, path: rel(to) });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Buat arsip permanen di workspace dari satu atau banyak selection.
+app.post("/api/archive", (req, res) => {
+  try {
+    const paths = archivePaths(req.body.paths);
+    const format = String(req.body.format || "");
+    const ext = archiveExtension(format);
+    const dest = safe(req.body.dest || "");
+    let name = path.basename(String(req.body.name || "archive"));
+    if (!name.toLowerCase().endsWith(ext)) name += ext;
+    const output = uniquePath(path.join(dest, name));
+    createArchive(paths, format, output);
+    res.json({ ok: true, path: rel(output) });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Download selection langsung sebagai ZIP atau TAR.GZ tanpa meninggalkan file.
+app.post("/api/archive-download", (req, res) => {
+  let temporary = "";
+  try {
+    const paths = archivePaths(req.body.paths);
+    const format = String(req.body.format || "");
+    const ext = archiveExtension(format);
+    const name = path.basename(String(req.body.name || "selection")) + ext;
+    temporary = path.join(os.tmpdir(), "vrcloud-" + crypto.randomBytes(12).toString("hex") + ext);
+    createArchive(paths, format, temporary);
+    res.download(temporary, name, () => { try { fs.unlinkSync(temporary); } catch (e) {} });
+  } catch (e) {
+    if (temporary) { try { fs.unlinkSync(temporary); } catch (ignore) {} }
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// Extract ZIP, TAR, TAR.GZ, atau TGZ ke folder unik di sebelah arsip.
+app.post("/api/extract", (req, res) => {
+  try {
+    const source = safe(req.body.path);
+    const lower = source.toLowerCase();
+    const type = lower.endsWith(".zip") ? "zip" :
+      (lower.endsWith(".tar") || lower.endsWith(".tar.gz") || lower.endsWith(".tgz")) ? "tar" : "";
+    if (!type) throw new Error("Format extract didukung: .zip, .tar, .tar.gz, .tgz");
+    validateArchiveEntries(source, type);
+    let base = path.basename(source).replace(/\.(tar\.gz|tgz|tar|zip)$/i, "") || "extracted";
+    const output = uniquePath(path.join(path.dirname(source), base));
+    fs.mkdirSync(output, { recursive: true });
+    if (type === "zip") {
+      execFileSync("unzip", ["-q", source, "-d", output], { timeout: 10 * 60 * 1000 });
+    } else {
+      execFileSync("tar", ["-xf", source, "-C", output, "--no-same-owner", "--no-same-permissions"], {
+        timeout: 10 * 60 * 1000,
+      });
+    }
+    res.json({ ok: true, path: rel(output) });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
