@@ -23,6 +23,47 @@ multi-browser collaboration in one Node.js application.
   and authenticated HTTP/WebSocket endpoints.
 - Always-on systemd deployment with automatic restart.
 
+## One-Command Full Installation
+
+On a fresh Ubuntu/Debian VPS, run exactly one command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/bootstrap.sh | sudo bash
+```
+
+This single command automatically:
+
+1. Installs Node.js 12.22.12 and npm with checksum verification.
+2. Installs Git, build tools, tmux, ZIP/TAR tools, Nginx, Snap, and Certbot.
+3. Clones VRCloud IDE into `/opt/vrcloud-ide`.
+4. Creates the dedicated `vrcloud` system account.
+5. Creates the workspace at `/srv/vrcloud-workspace`.
+6. Installs all production npm dependencies.
+7. Generates a secure `.env`, random login password, and cookie signing secret.
+8. Installs/enables the always-on systemd service.
+9. Detects the public IP and issues a trusted Let's Encrypt IP certificate.
+10. Configures HTTPS/WebSocket proxying on port `1337` and automatic renewal.
+11. Starts and verifies the complete installation.
+
+When it finishes, the installer prints the generated username, password, and
+URL:
+
+```text
+https://YOUR_SERVER_IP:1337/
+```
+
+Required firewall ports: `80`, `443`, and `1337`.
+
+Custom workspace or port can still be provided in one command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/bootstrap.sh \
+  | sudo env PORT=1337 WORKSPACE=/srv/vrcloud-workspace bash
+```
+
+For security-sensitive environments, download and inspect `bootstrap.sh`
+before piping it to `sudo bash`.
+
 ## Tested Environment
 
 - Ubuntu 22.04 LTS
@@ -31,7 +72,7 @@ multi-browser collaboration in one Node.js application.
 - tmux 3.x
 - Chromium/Chrome-based browser
 
-## Quick Installation
+## Step-by-Step Installation
 
 ### 1. Install Node.js
 

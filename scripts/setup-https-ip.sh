@@ -23,6 +23,7 @@ fi
 
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y nginx snapd curl ca-certificates
+systemctl enable --now snapd.socket
 if [[ ! -x "$CERTBOT" ]]; then
   snap install certbot --classic
 fi
