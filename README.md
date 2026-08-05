@@ -196,6 +196,7 @@ Every new terminal opens directly with a Kali-inspired two-line prompt:
 - `F6`: create a terminal.
 - `Ctrl`/`Cmd` + click in file tree: toggle file/folder selection.
 - `Shift` + click in file tree: select a visible range.
+- Download with multiple selected items: automatically download one ZIP.
 - Drag tab to pane center: move tab.
 - Drag tab to pane edge: create split.
 

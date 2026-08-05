@@ -979,7 +979,8 @@
     };
     if (items.length > 1) add(items.length + " items selected", () => {}, { disabled: true });
     add("Open", () => (it.dir ? expandPath(it.path) : openFile(it.path, it.name)), { disabled: !single });
-    add("Download", () => download(it), { disabled: !single });
+    add(single ? "Download" : "Download " + items.length + " Items as ZIP",
+      () => single ? download(it) : downloadArchive(items, "zip"));
     add("Download as ZIP", () => downloadArchive(items, "zip"), { sep: true });
     add("Download as TAR.GZ", () => downloadArchive(items, "tar.gz"));
     add("Compress to ZIP…", () => makeArchive(items, "zip"), { sep: true });
