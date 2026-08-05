@@ -60,17 +60,19 @@ sudo bash scripts/install-systemd.sh
 
 The installer:
 
-1. Installs `tmux`, Git, build tools, Python, and CA certificates.
+1. Installs `tmux`, `neofetch`, Nginx, Git, build tools, and CA certificates.
 2. Installs production npm dependencies.
 3. Creates the restricted `vrcloud` service account.
 4. Creates `/srv/vrcloud-workspace`.
 5. Generates `.env` with a strong random password and signing secret.
 6. Installs and starts `vrcloud-ide.service`.
+7. Obtains a trusted short-lived Let's Encrypt certificate for the public IP,
+   configures Nginx/WebSockets, and enables automatic renewal.
 
 Open:
 
 ```text
-http://YOUR_SERVER_IP:1337
+https://YOUR_SERVER_IP/
 ```
 
 The generated username/password are displayed once by the installer. Store
@@ -82,7 +84,7 @@ Install system dependencies:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y tmux git build-essential python3 ca-certificates
+sudo apt-get install -y tmux neofetch nginx snapd git build-essential python3 ca-certificates
 ```
 
 Install project dependencies:
@@ -109,6 +111,7 @@ AUTH_PASS=replace-with-the-generated-password
 AUTH_SECRET=replace-with-the-generated-64-character-secret
 COOKIE_SECURE=false
 SESSION_MAX_AGE=604800
+HOST=0.0.0.0
 ```
 
 Start manually:
@@ -120,6 +123,7 @@ PORT=1337 WORKSPACE=/srv/vrcloud-workspace npm start
 ## Configuration
 
 - `PORT`: HTTP port. Default: `1337`.
+- `HOST`: bind address; use `127.0.0.1` behind Nginx.
 - `WORKSPACE`: root directory exposed by the IDE.
 - `AUTH_USER`: login username. Required.
 - `AUTH_PASS`: login password. Required.
@@ -130,50 +134,35 @@ PORT=1337 WORKSPACE=/srv/vrcloud-workspace npm start
 
 Never commit `.env`. It is excluded by `.gitignore`.
 
-## HTTPS with Nginx
+## Trusted HTTPS for a Public IP
 
-Passwords must not be sent over public plain HTTP. Put VRCloud IDE behind HTTPS
-before exposing it to the internet.
+Let's Encrypt supports trusted IPv4/IPv6 certificates using its mandatory
+`shortlived` profile. These certificates are valid for approximately six days,
+so automatic renewal must remain enabled.
 
-Example Nginx virtual host:
-
-```nginx
-server {
-    listen 80;
-    server_name ide.example.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name ide.example.com;
-
-    ssl_certificate /etc/letsencrypt/live/ide.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/ide.example.com/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:1337;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_read_timeout 86400;
-    }
-}
-```
-
-After HTTPS works, set:
-
-```dotenv
-COOKIE_SECURE=true
-```
-
-Then restart:
+The production installer configures this automatically. To add or repair HTTPS
+separately:
 
 ```bash
+sudo PUBLIC_IP=129.121.96.86 PORT=1337 \
+  bash scripts/setup-https-ip.sh 129.121.96.86
 sudo systemctl restart vrcloud-ide
+```
+
+The script installs Certbot 5.4+ through Snap, requests the IP certificate,
+configures Nginx as a WebSocket reverse proxy, redirects HTTP to HTTPS, updates
+`COOKIE_SECURE=true`, and installs an Nginx reload deploy hook.
+
+Requirements:
+
+- ports `80` and `443` must be reachable from the internet;
+- the IP must be assigned directly to this server;
+- Snap and the Certbot renewal timer must remain enabled.
+
+To install without HTTPS:
+
+```bash
+sudo ENABLE_HTTPS=false bash scripts/install-systemd.sh
 ```
 
 ## Terminal Clipboard
@@ -187,10 +176,11 @@ sudo systemctl restart vrcloud-ide
 On plain HTTP, browser clipboard APIs may be unavailable. VRCloud IDE displays
 a paste dialog fallback. HTTPS enables direct clipboard access.
 
-The prompt format is:
+Every new terminal runs `neofetch` and uses a Kali-inspired two-line prompt:
 
 ```text
-vrcloudproject@hostname:/workspace/path#
+┌──(vrcloudproject㉿hostname)-[/workspace/path]
+└─#
 ```
 
 ## Editor and Workspace Shortcuts

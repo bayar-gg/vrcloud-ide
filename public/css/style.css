@@ -10,8 +10,8 @@
   --text-dim:  #7f929e;
   --tab-active:#0f1923;
   --run:       #6ab04c;
-  --term-bg:   #0d1720;
-  --term-head: #14212c;
+  --term-bg:   #0b0b0b;
+  --term-head: #151515;
 }
 /* ===== Preset tema UI ===== */
 body[data-ui-theme="flat-light"] {

@@ -5,6 +5,7 @@
  *
  * Env:
  *   PORT        port HTTP        (default 1337)
+ *   HOST        bind address     (default 0.0.0.0)
  *   WORKSPACE   folder kerja     (default: cwd)
  *   AUTH_USER   username login
  *   AUTH_PASS   password login
@@ -41,6 +42,7 @@ try {
 } catch (e) {}
 
 const PORT = parseInt(process.env.PORT || "1337", 10);
+const HOST = process.env.HOST || "0.0.0.0";
 const WORKSPACE = path.resolve(process.env.WORKSPACE || process.cwd());
 const SHELL = process.env.SHELL_BIN || "bash"; // paksa bash agar prompt Cloud9 aktif
 const AUTH_USER = process.env.AUTH_USER || "";
@@ -55,13 +57,17 @@ if (!AUTH_USER || !AUTH_PASS || AUTH_SECRET.length < 32) {
   process.exit(1);
 }
 
-// Prompt bash VRCloud: vrcloudproject@host:/path#
+// Prompt bash bergaya Kali + neofetch sekali untuk setiap shell baru.
 const RCFILE = path.join(__dirname, ".c9rc");
 try {
   fs.writeFileSync(RCFILE,
     '[ -f /etc/profile ] && . /etc/profile 2>/dev/null\n' +
     '[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc" 2>/dev/null\n' +
-    "export PS1='\\[\\e[1;32m\\]vrcloudproject@\\h\\[\\e[0m\\]:\\[\\e[1;34m\\]$PWD\\[\\e[0m\\]# '\n");
+    'if command -v neofetch >/dev/null 2>&1 && [ -z "$VRCLOUD_NEOFETCH_SHOWN" ]; then\n' +
+    '  export VRCLOUD_NEOFETCH_SHOWN=1\n' +
+    '  neofetch\n' +
+    'fi\n' +
+    "export PS1='\\[\\e[0;36m\\]┌──(\\[\\e[1;34m\\]vrcloudproject㉿\\h\\[\\e[0;36m\\])-[\\[\\e[1;37m\\]\\w\\[\\e[0;36m\\]]\\n└─\\[\\e[1;34m\\]#\\[\\e[0m\\] '\n");
 } catch (e) {}
 
 const app = express();
@@ -400,8 +406,8 @@ function shutdown() {
 process.on("SIGTERM", () => { shutdown(); process.exit(0); });
 process.on("SIGINT", () => { shutdown(); process.exit(0); });
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`VRCloud IDE berjalan di http://0.0.0.0:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`VRCloud IDE berjalan di http://${HOST}:${PORT}`);
   console.log(`Workspace: ${WORKSPACE}`);
   console.log(`Login: aktif (user=${AUTH_USER})`);
 });

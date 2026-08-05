@@ -11,6 +11,7 @@ Group=vrcloud
 WorkingDirectory=/opt/vrcloud-ide
 EnvironmentFile=/opt/vrcloud-ide/.env
 Environment=PORT=1337
+Environment=HOST=127.0.0.1
 Environment=WORKSPACE=/srv/vrcloud-workspace
 ExecStart=/usr/bin/env node /opt/vrcloud-ide/server.js
 Restart=always

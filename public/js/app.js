@@ -136,7 +136,7 @@
     walkLeaves(layout, (l) => {
       if (l._ed) l._ed.resize();
       const t = l.tabs.find((x) => x.id === l.active);
-      if (t && t.kind === "term") { const tt = TERMS[t.termId]; if (tt) setTimeout(() => { try { tt.fit.fit(); } catch (e) {} }, 0); }
+      if (t && t.kind === "term") { const tt = TERMS[t.termId]; if (tt) setTimeout(() => fitVisibleTerminal(tt), 0); }
     });
     markActiveLeaf();
   }
@@ -180,7 +180,7 @@
       const id = lf.__leaf; if (!id) return;
       if (id._ed) id._ed.resize();
       const t = id.tabs && id.tabs.find((x) => x.id === id.active);
-      if (t && t.kind === "term") { const tt = TERMS[t.termId]; if (tt) try { tt.fit.fit(); } catch (e) {} }
+      if (t && t.kind === "term") { const tt = TERMS[t.termId]; if (tt) fitVisibleTerminal(tt); }
     });
   }
 
@@ -315,7 +315,7 @@
       const t = TERMS[tab.termId];
       if (t) host.appendChild(t.el);
       host.style.display = "block"; edEl.style.display = "none";
-      setTimeout(() => { if (t) { try { t.fit.fit(); } catch (e) {} t.term.focus(); } }, 0);
+      setTimeout(() => { if (t) { fitVisibleTerminal(t); t.term.focus(); } }, 0);
       setStatus("terminal bash " + tab.termId, "");
     }
     // Jangan buat ulang DOM tab saat klik. Ini penting agar tombol close yang
@@ -559,7 +559,14 @@
   // ============================================================
   const FitAddon = (window.FitAddon && window.FitAddon.FitAddon) || window.FitAddon;
   const TERM_THEMES = {
-    "flat-dark": { background: "#0d1720", foreground: "#cdd6df", cursor: "#5b9bd5", selection: "#2a4b66" },
+    "flat-dark": {
+      background: "#0b0b0b", foreground: "#e8e8e8", cursor: "#00d7ff", selection: "#264f62",
+      black: "#1c1c1c", red: "#ff5f5f", green: "#5fff87", yellow: "#ffd75f",
+      blue: "#5fafff", magenta: "#d787ff", cyan: "#00d7d7", white: "#d0d0d0",
+      brightBlack: "#808080", brightRed: "#ff8787", brightGreen: "#87ffaf",
+      brightYellow: "#ffff87", brightBlue: "#87afff", brightMagenta: "#ff87ff",
+      brightCyan: "#5fffff", brightWhite: "#ffffff"
+    },
     "flat-light": { background: "#ffffff", foreground: "#1e2b36", cursor: "#3d7fb3", selection: "#cfe0ee" },
     "classic-dark": { background: "#141414", foreground: "#d4d4d4", cursor: "#6a9bd5", selection: "#2d4a63" },
     "classic-gray": { background: "#232323", foreground: "#dcdcdc", cursor: "#7fb3e6", selection: "#3a5163" },
@@ -567,6 +574,25 @@
   const currentTermTheme = () => TERM_THEMES[document.body.dataset.uiTheme || "flat-dark"] || TERM_THEMES["flat-dark"];
   const wsURL = (id) => (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/terminal?id=" + enc(id);
   const sendResize = (ws, term) => { if (ws.readyState === 1) ws.send("\x00" + JSON.stringify({ resize: { cols: term.cols, rows: term.rows } })); };
+  function terminalVisible(view) {
+    if (!view || !view.el || !view.el.isConnected) return false;
+    const host = view.el.closest(".pane-term-host");
+    return !!host && getComputedStyle(host).display !== "none" &&
+      view.el.offsetWidth >= 120 && view.el.offsetHeight >= 60;
+  }
+  function fitVisibleTerminal(view) {
+    if (!terminalVisible(view)) return false;
+    try {
+      view.fit.fit();
+      if (view.ws) sendResize(view.ws, view.term);
+      return true;
+    } catch (e) { return false; }
+  }
+  function terminalProtocolReply(data) {
+    return /^\x1b\[[?>]?[0-9;]*[cR]$/.test(data) ||
+      /^\x1b\][0-9]+;.*(?:\x07|\x1b\\)$/.test(data) ||
+      /^\x1bP.*\x1b\\$/.test(data);
+  }
   async function copyTerminal(term) {
     const text = term.getSelection();
     if (!text) return setStatus("Pilih teks terminal terlebih dahulu");
@@ -625,7 +651,7 @@
       if (view.closed) return;
       const ws = view.ws = new WebSocket(wsURL(id));
       ws.onopen = () => {
-        setTimeout(() => { try { fit.fit(); } catch (e) {} sendResize(ws, term); }, 40);
+        setTimeout(() => fitVisibleTerminal(view), 80);
         if (runCmd && !view.ran) { view.ran = true; ws.send(runCmd + "\n"); }
       };
       ws.onmessage = (ev) => term.write(typeof ev.data === "string" ? ev.data : new Uint8Array(ev.data));
@@ -636,8 +662,11 @@
         }
       };
     }
-    term.onData((d) => { if (view.ws && view.ws.readyState === 1) view.ws.send(d); });
-    term.onResize(() => { if (view.ws) sendResize(view.ws, term); });
+    term.onData((d) => {
+      if (terminalProtocolReply(d)) return;
+      if (view.ws && view.ws.readyState === 1) view.ws.send(d);
+    });
+    term.onResize(() => { if (view.ws && terminalVisible(view)) sendResize(view.ws, term); });
     connect();
     return view;
   }
@@ -977,7 +1006,7 @@
     forEachEditor((ed) => { ed.renderer.setShowGutter(!!ui.gutter); ed.setShowPrintMargin(!!ui.wrapMargin); ed.setFontSize(ui.fontSize + "px"); });
     for (const p in FILES) applyWrapToSession(FILES[p].session);
     localStorage.setItem(UIKEY, JSON.stringify(ui));
-    setTimeout(() => { forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach((t) => { try { t.fit.fit(); } catch (e) {} }); }, 30);
+    setTimeout(() => { forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach(fitVisibleTerminal); }, 30);
   }
   function toggleUI(k) { ui[k] = !ui[k]; if (k === "wrapMargin" && ui.wrapMargin) ui.wrap = true; applyUIState(); }
   function setFont(n) { ui.fontSize = Math.min(30, Math.max(8, n)); Object.values(TERMS).forEach((t) => { try { t.term.setOption("fontSize", ui.fontSize); } catch (e) {} }); applyUIState(); }
@@ -1124,7 +1153,7 @@
     document.body.dataset.uiTheme = name; localStorage.setItem("c9clone.ui", name);
     document.querySelectorAll(".sw").forEach((sw) => sw.classList.toggle("active", sw.dataset.theme === name));
     const th = currentTermTheme(); Object.values(TERMS).forEach((t) => { try { t.term.setOption("theme", th); } catch (e) {} });
-    setTimeout(() => { forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach((t) => { try { t.fit.fit(); } catch (e) {} }); }, 20);
+    setTimeout(() => { forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach(fitVisibleTerminal); }, 20);
   }
   function applySyntaxTheme(name) { forEachEditor((ed) => ed.setTheme("ace/theme/" + name)); localStorage.setItem("c9clone.syntax", name); const s = $("#syntax-theme"); if (s) s.value = name; }
   $("#gear").addEventListener("click", openPrefs);
@@ -1312,9 +1341,9 @@
   sync.on("fs-change", () => refreshTree());
   sync.on("error", (msg) => setStatus("Realtime error: " + msg.message));
 
-  window.addEventListener("resize", () => { forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach((t) => { try { t.fit.fit(); } catch (e) {} }); });
+  window.addEventListener("resize", () => { forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach(fitVisibleTerminal); });
 
   // ===== Dragbar sidebar =====
   function dragify(bar, cb) { bar.addEventListener("mousedown", (e) => { e.preventDefault(); let lx = e.clientX; const mv = (ev) => { cb(ev.clientX - lx); lx = ev.clientX; }; const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); }; document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); }); }
-  dragify($("#drag-x"), (dx) => { const sb = $("#sidebar"); sb.style.width = Math.min(600, Math.max(140, sb.offsetWidth + dx)) + "px"; forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach((t) => { try { t.fit.fit(); } catch (e) {} }); });
+  dragify($("#drag-x"), (dx) => { const sb = $("#sidebar"); sb.style.width = Math.min(600, Math.max(140, sb.offsetWidth + dx)) + "px"; forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach(fitVisibleTerminal); });
 })();
