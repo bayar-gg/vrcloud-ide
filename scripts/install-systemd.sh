@@ -103,13 +103,26 @@ if [[ "$READY" != "true" ]]; then
   exit 1
 fi
 
+PASSWORD_ROTATED=false
+if [[ -n "${VR_PASSWORD:-}" ]]; then
+  APP_DIR="$APP_DIR" VRCLOUD_SERVICE=vrcloud-ide VR_PASSWORD="$VR_PASSWORD" \
+    bash "$APP_DIR/scripts/change-password.sh" --from-env
+  PASSWORD_ROTATED=true
+elif [[ "${RESET_PASSWORD:-false}" == "true" ]]; then
+  APP_DIR="$APP_DIR" VRCLOUD_SERVICE=vrcloud-ide \
+    bash "$APP_DIR/scripts/change-password.sh" --generate
+  PASSWORD_ROTATED=true
+fi
+
 ACCESS_URL="http://$(hostname -I | awk '{print $1}'):${PORT}"
 
 echo
 echo "VRCloud IDE URL: ${ACCESS_URL}"
 echo "Workspace: ${WORKSPACE}"
 echo "Username: admin"
-if [[ -n "$GENERATED_PASSWORD" ]]; then
+if [[ "$PASSWORD_ROTATED" == "true" ]]; then
+  echo "Password: final password was configured by the rotation step above"
+elif [[ -n "$GENERATED_PASSWORD" ]]; then
   echo "Generated password: ${GENERATED_PASSWORD}"
 else
   echo "Password: unchanged in ${APP_DIR}/.env"

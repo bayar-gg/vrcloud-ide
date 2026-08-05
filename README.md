@@ -31,6 +31,24 @@ On a fresh Ubuntu/Debian VPS, run exactly one command:
 curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/bootstrap.sh | sudo bash
 ```
 
+Install/update everything and generate a new final password in the same command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/bootstrap.sh \
+  | sudo env RESET_PASSWORD=true bash
+```
+
+Install/update everything and set your own password (minimum 12 characters):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/bootstrap.sh \
+  | sudo env VR_PASSWORD='ChangeThisToYourStrongPassword' bash
+```
+
+The custom password form is convenient but places the password in shell
+history. Use the generated-password form or the interactive password script
+for better secrecy.
+
 This single command automatically:
 
 1. Installs Node.js 12.22.12 and npm with checksum verification.

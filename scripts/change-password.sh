@@ -14,6 +14,9 @@ MODE="${1:-interactive}"
 
 if [[ "$MODE" == "--generate" ]]; then
   NEW_PASSWORD="$(openssl rand -hex 24)"
+elif [[ "$MODE" == "--from-env" ]]; then
+  NEW_PASSWORD="${VR_PASSWORD:-}"
+  [[ -n "$NEW_PASSWORD" ]] || { echo "VR_PASSWORD is empty." >&2; exit 1; }
 elif [[ "$MODE" == "interactive" ]]; then
   if [[ ! -t 0 ]]; then
     echo "Interactive input requires a terminal." >&2
@@ -28,7 +31,7 @@ elif [[ "$MODE" == "interactive" ]]; then
   [[ "$NEW_PASSWORD" == "$CONFIRM_PASSWORD" ]] || { echo "Passwords do not match." >&2; exit 1; }
 else
   echo "Unknown option: $MODE" >&2
-  echo "Supported: --generate or no option for interactive mode." >&2
+  echo "Supported: --generate, --from-env, or no option for interactive mode." >&2
   exit 1
 fi
 
