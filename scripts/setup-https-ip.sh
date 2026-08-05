@@ -78,6 +78,12 @@ server {
 }
 
 server {
+    listen ${PUBLIC_IP}:${PORT};
+    server_name ${PUBLIC_IP};
+    return 301 https://${PUBLIC_IP}\$request_uri;
+}
+
+server {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
     server_name ${PUBLIC_IP};
