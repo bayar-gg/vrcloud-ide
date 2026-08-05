@@ -16,7 +16,7 @@ NODE_VERSION="12.22.12"
 echo "[1/5] Installing base operating-system packages..."
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  ca-certificates curl git xz-utils build-essential python3 tmux zip unzip nginx snapd openssl
+  ca-certificates curl git xz-utils build-essential python3 tmux zip unzip openssl
 
 case "$(uname -m)" in
   x86_64|amd64) NODE_ARCH="x64" ;;
@@ -53,17 +53,15 @@ else
   git clone --depth 1 "$REPOSITORY" "$APP_DIR"
 fi
 
-echo "[4/5] Installing VRCloud services and HTTPS..."
+echo "[4/5] Installing VRCloud services..."
 export WORKSPACE PORT
-export ENABLE_HTTPS="${ENABLE_HTTPS:-true}"
 bash "$APP_DIR/scripts/install-systemd.sh"
 
 echo "[5/5] Verifying installation..."
 systemctl is-active --quiet vrcloud-ide
-if [[ "$ENABLE_HTTPS" == "true" ]]; then
-  PUBLIC_IP="${PUBLIC_IP:-$(curl -4fsS https://api.ipify.org)}"
-  curl -fsSI "https://${PUBLIC_IP}:${PORT}/" >/dev/null
-fi
+SERVER_IP="$(hostname -I | awk '{print $1}')"
+curl -fsSI "http://${SERVER_IP}:${PORT}/" >/dev/null
 
 echo
 echo "VRCloud IDE installation completed successfully."
+echo "Open: http://${SERVER_IP}:${PORT}/"

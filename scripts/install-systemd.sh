@@ -10,8 +10,6 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SERVICE_USER="${VRCLOUD_USER:-vrcloud}"
 WORKSPACE="${WORKSPACE:-/srv/vrcloud-workspace}"
 PORT="${PORT:-1337}"
-ENABLE_HTTPS="${ENABLE_HTTPS:-true}"
-PUBLIC_IP="${PUBLIC_IP:-}"
 SERVICE_FILE="/etc/systemd/system/vrcloud-ide.service"
 
 command -v node >/dev/null || { echo "Node.js is required." >&2; exit 1; }
@@ -19,7 +17,7 @@ command -v npm >/dev/null || { echo "npm is required." >&2; exit 1; }
 
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  tmux zip unzip git build-essential python3 ca-certificates curl nginx snapd
+  tmux zip unzip git build-essential python3 ca-certificates curl
 
 if ! id "$SERVICE_USER" >/dev/null 2>&1; then
   useradd --system --create-home --shell /bin/bash "$SERVICE_USER"
@@ -60,7 +58,7 @@ Group=${SERVICE_USER}
 WorkingDirectory=${APP_DIR}
 EnvironmentFile=${APP_DIR}/.env
 Environment=PORT=${PORT}
-Environment=HOST=$([[ "$ENABLE_HTTPS" == "true" ]] && echo "127.0.0.1" || echo "0.0.0.0")
+Environment=HOST=0.0.0.0
 Environment=WORKSPACE=${WORKSPACE}
 ExecStart=$(command -v node) ${APP_DIR}/server.js
 Restart=always
@@ -78,14 +76,6 @@ systemctl daemon-reload
 systemctl enable --now vrcloud-ide
 
 ACCESS_URL="http://$(hostname -I | awk '{print $1}'):${PORT}"
-if [[ "$ENABLE_HTTPS" == "true" ]]; then
-  if [[ -z "$PUBLIC_IP" ]]; then
-    PUBLIC_IP="$(curl -4fsS https://api.ipify.org)"
-  fi
-  APP_DIR="$APP_DIR" PORT="$PORT" bash "$APP_DIR/scripts/setup-https-ip.sh" "$PUBLIC_IP"
-  systemctl restart vrcloud-ide
-  ACCESS_URL="https://${PUBLIC_IP}:${PORT}/"
-fi
 
 echo
 echo "VRCloud IDE URL: ${ACCESS_URL}"

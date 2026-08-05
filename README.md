@@ -34,25 +34,23 @@ curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/b
 This single command automatically:
 
 1. Installs Node.js 12.22.12 and npm with checksum verification.
-2. Installs Git, build tools, tmux, ZIP/TAR tools, Nginx, Snap, and Certbot.
+2. Installs Git, build tools, tmux, and ZIP/TAR tools.
 3. Clones VRCloud IDE into `/opt/vrcloud-ide`.
 4. Creates the dedicated `vrcloud` system account.
 5. Creates the workspace at `/srv/vrcloud-workspace`.
 6. Installs all production npm dependencies.
 7. Generates a secure `.env`, random login password, and cookie signing secret.
 8. Installs/enables the always-on systemd service.
-9. Detects the public IP and issues a trusted Let's Encrypt IP certificate.
-10. Configures HTTPS/WebSocket proxying on port `1337` and automatic renewal.
-11. Starts and verifies the complete installation.
+9. Starts and verifies the complete installation.
 
 When it finishes, the installer prints the generated username, password, and
 URL:
 
 ```text
-https://YOUR_SERVER_IP:1337/
+http://YOUR_SERVER_IP:1337/
 ```
 
-Required firewall ports: `80`, `443`, and `1337`.
+Required firewall port: `1337`.
 
 Custom workspace or port can still be provided in one command:
 
@@ -102,19 +100,17 @@ sudo bash scripts/install-systemd.sh
 
 The installer:
 
-1. Installs `tmux`, ZIP/TAR tools, Nginx, Git, build tools, and CA certificates.
+1. Installs `tmux`, ZIP/TAR tools, Git, build tools, and CA certificates.
 2. Installs production npm dependencies.
 3. Creates the restricted `vrcloud` service account.
 4. Creates `/srv/vrcloud-workspace`.
 5. Generates `.env` with a strong random password and signing secret.
 6. Installs and starts `vrcloud-ide.service`.
-7. Obtains a trusted short-lived Let's Encrypt certificate for the public IP,
-   configures Nginx/WebSockets, and enables automatic renewal.
 
 Open:
 
 ```text
-https://YOUR_SERVER_IP:1337/
+http://YOUR_SERVER_IP:1337/
 ```
 
 The generated username/password are displayed once by the installer. Store
@@ -126,7 +122,7 @@ Install system dependencies:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y tmux zip unzip nginx snapd git build-essential python3 ca-certificates
+sudo apt-get install -y tmux zip unzip git build-essential python3 ca-certificates
 ```
 
 Install project dependencies:
@@ -165,7 +161,7 @@ PORT=1337 WORKSPACE=/srv/vrcloud-workspace npm start
 ## Configuration
 
 - `PORT`: HTTP port. Default: `1337`.
-- `HOST`: bind address; use `127.0.0.1` behind Nginx.
+- `HOST`: bind address. Default production installer value: `0.0.0.0`.
 - `WORKSPACE`: root directory exposed by the IDE.
 - `AUTH_USER`: login username. Required.
 - `AUTH_PASS`: login password. Required.
@@ -176,39 +172,21 @@ PORT=1337 WORKSPACE=/srv/vrcloud-workspace npm start
 
 Never commit `.env`. It is excluded by `.gitignore`.
 
-## Trusted HTTPS for a Public IP
+## Optional HTTPS
 
-Let's Encrypt supports trusted IPv4/IPv6 certificates using its mandatory
-`shortlived` profile. These certificates are valid for approximately six days,
-so automatic renewal must remain enabled.
+The automatic installer intentionally does not install Certbot, Snap, Nginx,
+or request a certificate. This avoids installation failures caused by blocked
+ACME challenges, provider proxies, NAT, or port `80` restrictions.
 
-The production installer configures this automatically. To add or repair HTTPS
-separately:
+The default URL is:
 
-```bash
-sudo PUBLIC_IP=129.121.96.86 PORT=1337 \
-  bash scripts/setup-https-ip.sh 129.121.96.86
-sudo systemctl restart vrcloud-ide
+```text
+http://YOUR_SERVER_IP:1337/
 ```
 
-The script installs Certbot 5.4+ through Snap, requests the IP certificate,
-configures Nginx as a WebSocket reverse proxy, redirects HTTP to HTTPS, updates
-`COOKIE_SECURE=true`, and installs an Nginx reload deploy hook.
-Port `1337` remains the canonical public port: Nginx terminates TLS on
-`https://PUBLIC_IP:1337/`, plain HTTP on the same port redirects to HTTPS, and
-the Node.js backend remains bound safely to `127.0.0.1:1337`.
-
-Requirements:
-
-- ports `80` and `443` must be reachable from the internet;
-- the IP must be assigned directly to this server;
-- Snap and the Certbot renewal timer must remain enabled.
-
-To install without HTTPS:
-
-```bash
-sudo ENABLE_HTTPS=false bash scripts/install-systemd.sh
-```
+If HTTPS is required, configure it separately with a domain, external reverse
+proxy, VPN, CDN, or provider-managed TLS service. After HTTPS is working, set
+`COOKIE_SECURE=true` in `.env` and restart `vrcloud-ide`.
 
 ## Terminal Clipboard
 
