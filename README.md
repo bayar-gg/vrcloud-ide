@@ -62,6 +62,11 @@ curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/b
 For security-sensitive environments, download and inspect `bootstrap.sh`
 before piping it to `sudo bash`.
 
+The command is safe to run again for updates. It preserves the existing
+`.env`, workspace, and session data, then performs a fast-forward-only Git
+update. Repository ownership is handled with a per-command `safe.directory`
+override; the installer does not modify global Git configuration.
+
 ## Tested Environment
 
 - Ubuntu 22.04 LTS

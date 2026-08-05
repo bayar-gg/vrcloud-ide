@@ -37,6 +37,8 @@ if [[ ! -x "$NODE_ROOT/bin/node" ]]; then
   [[ -n "$EXPECTED" ]] || { echo "Node.js checksum not found." >&2; exit 1; }
   printf '%s  %s\n' "$EXPECTED" "$TMP_DIR/${NODE_PACKAGE}.tar.xz" | sha256sum -c -
   tar -xJf "$TMP_DIR/${NODE_PACKAGE}.tar.xz" -C /opt
+else
+  echo "[2/5] Node.js ${NODE_VERSION} is already installed."
 fi
 ln -sfn "$NODE_ROOT/bin/node" /usr/local/bin/node
 ln -sfn "$NODE_ROOT/bin/npm" /usr/local/bin/npm
@@ -44,7 +46,7 @@ ln -sfn "$NODE_ROOT/bin/npx" /usr/local/bin/npx
 
 echo "[3/5] Downloading VRCloud IDE..."
 if [[ -d "$APP_DIR/.git" ]]; then
-  git -C "$APP_DIR" pull --ff-only
+  git -c "safe.directory=$APP_DIR" -C "$APP_DIR" pull --ff-only
 elif [[ -e "$APP_DIR" && -n "$(ls -A "$APP_DIR" 2>/dev/null)" ]]; then
   echo "$APP_DIR exists and is not an empty Git repository." >&2
   exit 1
