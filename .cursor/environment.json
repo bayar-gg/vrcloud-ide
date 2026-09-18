@@ -1,0 +1,11 @@
+{
+  "name": "VRCloud IDE",
+  "install": "./scripts/cloud-agent-install.sh",
+  "terminals": [
+    {
+      "name": "vrcloud-ide",
+      "command": "WORKSPACE=/workspace PORT=1337 npm start"
+    }
+  ],
+  "ports": [1337]
+}
