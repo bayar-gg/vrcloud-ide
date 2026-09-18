@@ -57,6 +57,8 @@ fi
 
 echo "[4/5] Installing VRCloud services..."
 export WORKSPACE PORT
+export VRCLOUD_ROOT_ACCESS="${VRCLOUD_ROOT_ACCESS:-false}"
+export SHELL_BIN="${SHELL_BIN:-/bin/bash}"
 export RESET_PASSWORD="${RESET_PASSWORD:-false}"
 if [[ -n "${VR_PASSWORD:-}" ]]; then export VR_PASSWORD; fi
 bash "$APP_DIR/scripts/install-systemd.sh"

@@ -60,6 +60,23 @@ curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/b
   | sudo env PORT=1337 WORKSPACE=/srv/vrcloud-workspace bash
 ```
 
+### Optional full root mode
+
+To run the IDE service and every browser terminal as root with Bash, and expose
+the entire host filesystem in the file manager:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/bootstrap.sh \
+  | sudo env VRCLOUD_ROOT_ACCESS=true WORKSPACE=/ SHELL_BIN=/bin/bash bash
+```
+
+This is an explicit opt-in because a compromised login or application bug in
+root mode grants full control of the host. Do not expose this mode directly to
+the public internet. Restrict access with a firewall or VPN, enable HTTPS, and
+use a strong generated password. Omitting `WORKSPACE=/` still gives browser
+terminals root access while keeping the file manager under
+`/srv/vrcloud-workspace`.
+
 For security-sensitive environments, download and inspect `bootstrap.sh`
 before piping it to `sudo bash`.
 
@@ -216,6 +233,8 @@ PORT=1337 WORKSPACE=/srv/vrcloud-workspace npm start
 - `COOKIE_SECURE`: set to `true` only when HTTPS is enabled.
 - `SESSION_MAX_AGE`: login lifetime in seconds. Default: `604800`.
 - `SHELL_BIN`: terminal shell. Default: `bash`.
+- `VRCLOUD_ROOT_ACCESS`: install the service with root privileges when `true`.
+  Default: `false`.
 
 Never commit `.env`. It is excluded by `.gitignore`.
 

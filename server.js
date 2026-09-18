@@ -157,7 +157,8 @@ app.use((req, res, next) => {
 // ---- Amankan path agar tidak keluar dari WORKSPACE ------------------------
 function safe(rel) {
   const p = path.resolve(WORKSPACE, "." + path.sep + (rel || ""));
-  if (p !== WORKSPACE && !p.startsWith(WORKSPACE + path.sep)) {
+  const workspacePrefix = WORKSPACE.endsWith(path.sep) ? WORKSPACE : WORKSPACE + path.sep;
+  if (p !== WORKSPACE && !p.startsWith(workspacePrefix)) {
     throw new Error("Path di luar workspace");
   }
   return p;
@@ -470,6 +471,7 @@ const server = http.createServer(app);
 const terminals = new TerminalManager({
   workspace: WORKSPACE,
   rcfile: RCFILE,
+  shell: SHELL,
   store,
   safe,
 });

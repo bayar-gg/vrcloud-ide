@@ -7,13 +7,32 @@ if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
 fi
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SERVICE_USER="${VRCLOUD_USER:-vrcloud}"
+ROOT_ACCESS="${VRCLOUD_ROOT_ACCESS:-false}"
+case "${ROOT_ACCESS,,}" in
+  true|1|yes)
+    if [[ -n "${VRCLOUD_USER:-}" && "$VRCLOUD_USER" != "root" ]]; then
+      echo "VRCLOUD_ROOT_ACCESS cannot be combined with VRCLOUD_USER=$VRCLOUD_USER." >&2
+      exit 1
+    fi
+    SERVICE_USER="root"
+    ;;
+  false|0|no)
+    SERVICE_USER="${VRCLOUD_USER:-vrcloud}"
+    ;;
+  *)
+    echo "VRCLOUD_ROOT_ACCESS must be true or false." >&2
+    exit 1
+    ;;
+esac
 WORKSPACE="${WORKSPACE:-/srv/vrcloud-workspace}"
 PORT="${PORT:-1337}"
+SHELL_BIN="${SHELL_BIN:-/bin/bash}"
 SERVICE_FILE="/etc/systemd/system/vrcloud-ide.service"
 
 command -v node >/dev/null || { echo "Node.js is required." >&2; exit 1; }
 command -v npm >/dev/null || { echo "npm is required." >&2; exit 1; }
+SHELL_PATH="$(command -v "$SHELL_BIN")" ||
+  { echo "Configured shell is not executable: $SHELL_BIN" >&2; exit 1; }
 
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -22,6 +41,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y \
 if ! id "$SERVICE_USER" >/dev/null 2>&1; then
   useradd --system --create-home --shell /bin/bash "$SERVICE_USER"
 fi
+SERVICE_GROUP="$(id -gn "$SERVICE_USER")"
+SERVICE_HOME="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
 
 mkdir -p "$WORKSPACE" "$APP_DIR/data"
 cd "$APP_DIR"
@@ -54,7 +75,10 @@ else
 fi
 chmod 600 .env
 
-chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR" "$WORKSPACE"
+chown -R "$SERVICE_USER:$SERVICE_GROUP" "$APP_DIR"
+if [[ "$SERVICE_USER" != "root" ]]; then
+  chown -R "$SERVICE_USER:$SERVICE_GROUP" "$WORKSPACE"
+fi
 
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
@@ -66,12 +90,14 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 User=${SERVICE_USER}
-Group=${SERVICE_USER}
+Group=${SERVICE_GROUP}
 WorkingDirectory=${APP_DIR}
 EnvironmentFile=${APP_DIR}/.env
 Environment=PORT=${PORT}
 Environment=HOST=0.0.0.0
 Environment=WORKSPACE=${WORKSPACE}
+Environment=HOME=${SERVICE_HOME}
+Environment=SHELL_BIN=${SHELL_PATH}
 ExecStart=$(command -v node) ${APP_DIR}/server.js
 Restart=always
 RestartSec=3
@@ -106,6 +132,11 @@ echo
 echo "VRCloud IDE installed but not started."
 echo "URL after start: ${ACCESS_URL}"
 echo "Workspace: ${WORKSPACE}"
+echo "Service user: ${SERVICE_USER}"
+echo "Terminal shell: ${SHELL_PATH}"
+if [[ "$SERVICE_USER" == "root" ]]; then
+  echo "WARNING: Browser terminals have unrestricted root access to this host."
+fi
 echo "Username: admin"
 if [[ "$PASSWORD_ROTATED" == "true" ]]; then
   echo "Password: final password was configured by the rotation step above"
