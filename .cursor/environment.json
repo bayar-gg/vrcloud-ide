@@ -1,0 +1,16 @@
+{
+  "name": "VRCloud IDE",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "vrcloud-ide",
+      "command": "PORT=1337 HOST=0.0.0.0 WORKSPACE=\"${VRCLOUD_WORKSPACE:-$HOME/vrcloud-workspace}\" node server.js"
+    }
+  ],
+  "ports": [
+    {
+      "name": "VRCloud IDE",
+      "port": 1337
+    }
+  ]
+}
