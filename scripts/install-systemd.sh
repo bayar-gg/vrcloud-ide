@@ -112,6 +112,11 @@ EOF
 
 ln -sfn "$APP_DIR/scripts/vrcloud" /usr/local/bin/vrcloud
 systemctl daemon-reload
+INSTALLED_USER="$(systemctl show vrcloud-ide.service --property=User --value)"
+if [[ "$INSTALLED_USER" != "$SERVICE_USER" ]]; then
+  echo "Service user verification failed: expected $SERVICE_USER, got ${INSTALLED_USER:-<empty>}." >&2
+  exit 1
+fi
 systemctl enable vrcloud-ide >/dev/null
 systemctl stop vrcloud-ide || true
 

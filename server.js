@@ -64,7 +64,9 @@ try {
   fs.writeFileSync(RCFILE,
     '[ -f /etc/profile ] && . /etc/profile 2>/dev/null\n' +
     '[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc" 2>/dev/null\n' +
-    "export PS1='\\[\\e[0;36m\\]┌──(\\[\\e[1;34m\\]vrcloudproject㉿\\h\\[\\e[0;36m\\])-[\\[\\e[1;37m\\]\\w\\[\\e[0;36m\\]]\\n└─\\[\\e[1;34m\\]#\\[\\e[0m\\] '\n");
+    "VRCLOUD_PROMPT_SYMBOL='$'\n" +
+    '[ "$(id -u)" -eq 0 ] && VRCLOUD_PROMPT_SYMBOL=\'#\'\n' +
+    "export PS1='\\[\\e[0;36m\\]┌──(\\[\\e[1;34m\\]\\u㉿\\h\\[\\e[0;36m\\])-[\\[\\e[1;37m\\]\\w\\[\\e[0;36m\\]]\\n└─\\[\\e[1;34m\\]${VRCLOUD_PROMPT_SYMBOL}\\[\\e[0m\\] '\n");
 } catch (e) {}
 
 const app = express();

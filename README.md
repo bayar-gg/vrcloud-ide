@@ -70,6 +70,15 @@ curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/b
   | sudo env VRCLOUD_ROOT_ACCESS=true WORKSPACE=/ SHELL_BIN=/bin/bash bash
 ```
 
+The installer leaves the service stopped. Start it and verify the configured
+service account before opening a browser terminal:
+
+```bash
+sudo vrcloud start
+systemctl show vrcloud-ide.service --property=User --value
+# root
+```
+
 This is an explicit opt-in because a compromised login or application bug in
 root mode grants full control of the host. Do not expose this mode directly to
 the public internet. Restrict access with a firewall or VPN, enable HTTPS, and
@@ -268,9 +277,12 @@ a paste dialog fallback. HTTPS enables direct clipboard access.
 Every new terminal opens directly with a Kali-inspired two-line prompt:
 
 ```text
-┌──(vrcloudproject㉿hostname)-[/workspace/path]
-└─#
+┌──(username㉿hostname)-[/workspace/path]
+└─$
 ```
+
+The final character reflects the actual privilege level: `$` for a regular
+user and `#` for root.
 
 ## Editor and Workspace Shortcuts
 
@@ -405,6 +417,20 @@ Reinstall dependencies if the Node.js ABI changed:
 rm -rf node_modules
 npm ci --production
 ```
+
+### `apt update` reports `Permission denied`
+
+Check the real terminal user; the prompt alone should never be used as proof
+of root access:
+
+```bash
+id -u
+systemctl show vrcloud-ide.service --property=User --value
+```
+
+If `id -u` is not `0`, reinstall using the root-mode command above and start
+the service again. Existing browser terminals must be closed and recreated
+after changing the service account.
 
 ### Realtime status remains offline
 
