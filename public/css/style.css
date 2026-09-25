@@ -739,6 +739,7 @@ body.side-search #sidebar-search { display: flex; }
     gap: 2px;
     flex-wrap: nowrap;
   }
+  #menubar .mb-update { display: none !important; }
   #mb-burger, #mb-more {
     display: inline-flex;
     align-items: center;
@@ -761,7 +762,7 @@ body.side-search #sidebar-search { display: flex; }
   #mb-burger[aria-expanded="true"], #mb-more[aria-expanded="true"] {
     background: var(--bg3);
   }
-  #menubar .logo { margin-right: 4px; font-size: 13px; }
+  #menubar .logo { margin-right: 4px; font-size: 13px; min-width: 0; flex: 0 1 auto; }
   #ws-name, #sys-metrics, #sync-status .txt { display: none !important; }
   #gear { margin-left: 2px; min-height: 44px; display: inline-flex; align-items: center; }
   #menubar .logout-form button { min-height: 44px; padding: 0 10px; font-size: 12px; }
@@ -966,11 +967,11 @@ body.side-search #sidebar-search { display: flex; }
 }
 
 @media (max-width: 480px) {
-  #menubar .logo { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+  #menubar .logo { max-width: 38vw; overflow: hidden; text-overflow: ellipsis; }
   #menubar .mb-ai { display: none; }
   #sync-status { display: none; }
-  .mb-update:not(.avail) { display: none; }
-  #activitybar, #sidebar { width: min(100vw - 36px, 360px); }
+  #gear .mb-lbl { display: none; }
+  #activitybar, #sidebar { width: min(78vw, 300px); }
   .pane-tab { max-width: 58vw; }
   #sb-lang, #sb-pos { display: none !important; }
   #mob-nav button { font-size: 10px; }
