@@ -5,6 +5,15 @@ one commit on `main`; every update replaces it and bumps the version below.
 Installed servers pick up new versions with `vrcloud update` or the **Update**
 button in the menubar.
 
+## 3.0.13
+
+### Changed
+
+- Phones and narrow browsers (≤768px, with a tighter 480px pass) get a usable IDE: viewport
+  and safe-area handling, a file drawer, a Menu overflow, touch-sized chrome, and a bottom bar
+  for Files / Editor / Terminal / Agent. The previous mobile mode that hid the IDE and left
+  only the AI chat is gone. Desktop (≥1024px) layout is unchanged.
+
 ## 3.0.12
 
 ### Changed

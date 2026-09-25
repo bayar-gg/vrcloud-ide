@@ -540,15 +540,13 @@
     ".ai-sk-name .badge{font-weight:400;font-size:10px;opacity:.6;margin-left:6px;padding:0 5px;border:1px solid var(--line,#2b4256);border-radius:8px}" +
     /* statistik diff di riwayat */
     ".ai-hist-stats{font-size:10px;margin-left:6px}.ai-hist-stats .add{color:#3fb950}.ai-hist-stats .del{color:#ff6b74;margin-left:3px}" +
-    /* layar sempit: panel memenuhi layar */
-    "@media (max-width:720px){#ai-panel.open{position:fixed;inset:0;width:100%!important;min-width:0;z-index:60;border-left:0}" +
-    "#ai-resize{display:none}#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{left:6px;right:6px}#ai-bar .hint{display:none}}" +
-    /* Mode seluler: sembunyikan seluruh IDE, hanya panel chat agent yang tampil (layar penuh). */
-    "#ai-mobile-note{display:none;padding:7px 12px;font-size:11px;line-height:1.4;background:rgba(77,163,255,.12);border-bottom:1px solid var(--line,#2b4256);color:var(--accent2,#4da3ff);flex:none}" +
-    "body.mobile #menubar,body.mobile #statusbar,body.mobile #menu-pop,body.mobile #activitybar,body.mobile #sidebar,body.mobile #drag-x,body.mobile #content{display:none!important}" +
-    "body.mobile #main{display:block}" +
-    "body.mobile #ai-panel,body.mobile #ai-panel.open{display:flex!important;position:fixed;inset:0;width:100%!important;min-width:0;z-index:60;border-left:0}" +
-    "body.mobile #ai-resize{display:none}body.mobile #ai-close-btn{display:none}body.mobile #ai-mobile-note{display:block}body.mobile #ai-bar .hint{display:none}" +
+    /* layar sempit: panel overlay di atas workarea, di antara menubar dan bilah navigasi bawah */
+    "@media (max-width:768px){#ai-panel.open{position:fixed;top:calc(48px + env(safe-area-inset-top,0px));left:0;right:0;bottom:calc(52px + env(safe-area-inset-bottom,0px));width:100%!important;min-width:0;z-index:70;border-left:0}" +
+    "#ai-resize{display:none}#ai-close-btn{display:inline-flex;min-width:44px;min-height:44px;align-items:center;justify-content:center}" +
+    "#ai-head{height:48px;padding:0 8px}#ai-head .ai-ibtn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}" +
+    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{left:6px;right:6px}#ai-bar .hint{display:none}" +
+    "#ai-input{font-size:16px}#ai-plus,#ai-send,#ai-stop,#ai-mic{min-width:44px;min-height:44px}}" +
+    "@media (max-width:480px){#menubar .mb-ai{display:none!important}}" +
     ".ai-ico{vertical-align:-2px;margin-right:4px;flex:none}" +
     ".ai-chip.skill .ai-chip-nm{display:inline-flex;align-items:center}.ai-chip.skill .ai-ico{color:var(--accent2,#4da3ff)}" +
     ".ai-sktags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}" +
@@ -1019,11 +1017,6 @@
     var cfgBtn = el("span", "ai-ibtn", "\u2699"); cfgBtn.title = "Setelan API"; cfgBtn.addEventListener("click", openSettings); head.appendChild(cfgBtn);
     var closeBtn = el("span", "ai-ibtn", "\u2715"); closeBtn.id = "ai-close-btn"; closeBtn.title = "Tutup"; closeBtn.addEventListener("click", function () { setOpen(false); }); head.appendChild(closeBtn);
     panel.appendChild(head);
-
-    // Catatan khusus layar seluler (disembunyikan di desktop lewat CSS).
-    var mnote = el("div"); mnote.id = "ai-mobile-note";
-    mnote.textContent = "Mode seluler \u2014 hanya chat AI Agent. Buka di desktop untuk IDE lengkap (editor, terminal, file).";
-    panel.appendChild(mnote);
 
     msgs = el("div"); msgs.id = "ai-msgs";
     msgs.addEventListener("click", onMsgsClick);
@@ -2662,6 +2655,7 @@
     if (open) { clearUnread(); refreshStatus(); setTimeout(function () { input && !input.disabled && input.focus(); scrollBottom(); }, 30); }
     // Panel AI mengikuti browser lain (dan sebaliknya) — kecuali perubahan ini datang dari remote.
     if (!remote && window.VRCloudViewSync) { try { window.VRCloudViewSync(); } catch (e) {} }
+    if (window.VRCloudMobile && window.VRCloudMobile.onAiToggle) { try { window.VRCloudMobile.onAiToggle(open); } catch (e) {} }
   }
 
   // Saat sibuk, composer tetap aktif: pesan baru masuk antrean dan dikirim
@@ -4091,9 +4085,6 @@
       if (historyOpen) closeHistory();
     }, true);
     document.addEventListener("visibilitychange", function () { if (!document.hidden && panel.classList.contains("open")) clearUnread(); });
-    // Di layar seluler (class "mobile" dipasang app.js) panel chat selalu terbuka penuh.
-    if (document.body.classList.contains("mobile")) setOpen(true);
-    window.addEventListener("resize", function () { if (document.body.classList.contains("mobile") && !panel.classList.contains("open")) setOpen(true); });
     if (localStorage.getItem(OPEN_KEY) === "1") setOpen(true);
   }
 

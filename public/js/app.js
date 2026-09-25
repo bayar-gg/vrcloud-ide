@@ -234,26 +234,22 @@
     updateSyncStatus(); sbRefreshTerm(); // nama shell di status bar butuh INFO.spec
   });
 
-  // Mode seluler: IDE penuh (editor, terminal, file tree) butuh desktop; di browser mobile
-  // hanya panel chat AI Agent yang ditampilkan (layar penuh). Ditandai class "mobile" di body.
-  function isMobileView() {
-    try {
-      var ua = /Android|iPhone|iPod|Mobile|Opera Mini|IEMobile|BlackBerry|webOS/i.test(navigator.userAgent || "");
-      var coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-      var narrow = window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
-      var tiny = window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
-      return ua || (coarse && narrow) || tiny;
-    } catch (e) { return false; }
-  }
-  function applyMobileView() {
-    var m = isMobileView();
-    document.body.classList.toggle("mobile", m);
-    if (m && window.VRCloudAI && window.VRCloudAI.open) window.VRCloudAI.open();
-  }
-  applyMobileView();
-  var _mobileT = null;
-  window.addEventListener("resize", function () { clearTimeout(_mobileT); _mobileT = setTimeout(applyMobileView, 200); });
-  window.addEventListener("orientationchange", applyMobileView);
+  // Layar sempit (≤768px): drawer file + bilah navigasi bawah. Desktop ≥1024px tidak berubah.
+  // Class "narrow" hanya penanda JS; layout utamanya di media query CSS.
+  const MQ_NARROW = window.matchMedia ? window.matchMedia("(max-width: 768px)") : null;
+  function isNarrowView() { return !!(MQ_NARROW && MQ_NARROW.matches); }
+  function applyNarrowClass() { document.body.classList.toggle("narrow", isNarrowView()); }
+  applyNarrowClass();
+  const Mobile = {
+    isNarrow: isNarrowView,
+    afterOpenFile: function () {},
+    openFiles: function () {},
+    showEditor: function () {},
+    syncNav: function () {},
+    closeMenus: function () {},
+    onAiToggle: function () {},
+  };
+  window.VRCloudMobile = Mobile;
 
   // ===== Modal prompt =====
   function promptDlg(title, def) {
@@ -579,6 +575,7 @@
     // markActiveLeaf() sudah menyegarkan item status bar (file/terminal aktif).
     updateTabSelection(); renderOpenFiles(); markActiveLeaf(); queueLayoutSync();
     if (ABROWSER) setTimeout(updateBrowserLive, 0); // tab Browser agent terlihat/tersembunyi → mulai/berhenti screencast
+    Mobile.syncNav();
   }
 
   // ---- drop zones (split) ----
@@ -739,6 +736,7 @@
     if (!found) return false;
     setActiveTab(found.leaf, found.tab.id);
     if (gotoLine && found.leaf._ed) found.leaf._ed.gotoLine(gotoLine, 0, true);
+    Mobile.afterOpenFile();
     return true;
   }
   function installSharedDoc(doc, name) {
@@ -812,6 +810,7 @@
     const tab = { id: ++tabSeq, kind: "file", path: p, name };
     leaf.tabs.push(tab); renderLayout(); setActiveTab(leaf, tab.id);
     if (gotoLine && leaf._ed) leaf._ed.gotoLine(gotoLine, 0, true);
+    Mobile.afterOpenFile();
   }
   function pathOpenElsewhere(p, exceptTabId) {
     let n = 0; walkLeaves(layout, (l) => l.tabs.forEach((t) => { if (t.kind === "file" && t.path === p && t.id !== exceptTabId) n++; })); return n;
@@ -2433,6 +2432,7 @@
   // Buka panel pencarian; scope folder -> diisikan ke "files to include"; seleksi editor -> query.
   function openSearch(scope) {
     setSideView("search");
+    Mobile.openFiles();
     if (scope) { srch.inc.value = scope.replace(/\/+$/, "") + "/**"; const adv = $("#sidebar-search .srch-adv"); adv.hidden = false; $("#srch-more").classList.add("on"); }
     const ed = activeEditor(); const sel = ed ? ed.getSelectedText() : "";
     if (sel && sel.indexOf("\n") === -1 && sel.length <= 200) { srch.q.value = sel; srchRun(); }
@@ -2917,7 +2917,12 @@
   };
   const pop = $("#menu-pop");
   let openMenuName = null;
-  function closeMenus() { pop.classList.remove("open"); pop.innerHTML = ""; document.querySelectorAll("#menubar .menu.open").forEach((m) => m.classList.remove("open")); openMenuName = null; }
+  function closeMenus() {
+    pop.classList.remove("open"); pop.innerHTML = "";
+    document.querySelectorAll("#menubar .menu.open").forEach((m) => m.classList.remove("open"));
+    openMenuName = null;
+    Mobile.closeMenus();
+  }
   function buildItems(container, items, topLevel) {
     items.forEach((it) => {
       if (it.sep) { const s = document.createElement("div"); s.className = "sep"; container.appendChild(s); return; }
@@ -2926,12 +2931,16 @@
       d.querySelector(".lbl").textContent = it.label;
       if (it.sub) {
         const subEl = document.createElement("div"); subEl.className = "submenu"; buildItems(subEl, it.sub, false); pop.appendChild(subEl);
-        d.addEventListener("mouseenter", () => {
-          pop.querySelectorAll(".submenu.open").forEach((x) => x.classList.remove("open")); subEl.classList.add("open");
+        const placeSub = () => {
+          pop.querySelectorAll(".submenu.open").forEach((x) => { if (x !== subEl) x.classList.remove("open"); });
+          subEl.classList.add("open");
+          if (isNarrowView()) return;
           const r = d.getBoundingClientRect();
           subEl.style.left = Math.min(r.right, innerWidth - subEl.offsetWidth - 6) + "px";
           subEl.style.top = Math.min(r.top - 4, innerHeight - subEl.offsetHeight - 6) + "px";
-        });
+        };
+        d.addEventListener("mouseenter", placeSub);
+        d.addEventListener("click", (e) => { e.stopPropagation(); if (subEl.classList.contains("open") && isNarrowView()) subEl.classList.remove("open"); else placeSub(); });
       } else {
         if (topLevel) d.addEventListener("mouseenter", () => pop.querySelectorAll(".submenu.open").forEach((x) => x.classList.remove("open")));
         d.addEventListener("click", () => { closeMenus(); if (it.act) it.act(); });
@@ -2951,7 +2960,9 @@
     b.addEventListener("click", (e) => { e.stopPropagation(); if (openMenuName === b.dataset.menu) closeMenus(); else showMenu(b); });
     b.addEventListener("mouseenter", () => { if (openMenuName && openMenuName !== b.dataset.menu) showMenu(b); });
   });
-  window.addEventListener("click", (e) => { if (!e.target.closest("#menu-pop") && !e.target.closest("#menubar .menu")) closeMenus(); });
+  window.addEventListener("click", (e) => {
+    if (!e.target.closest("#menu-pop") && !e.target.closest("#menubar .menu") && !e.target.closest("#mb-more")) closeMenus();
+  });
   document.querySelector(".mb-run").addEventListener("click", runActive);
 
   // ============================================================
@@ -3072,7 +3083,6 @@
   window.addEventListener("keydown", (e) => {
     const k = (e.key || "").toLowerCase();
     if (!(e.ctrlKey || e.metaKey) || e.altKey || k !== "p") return;
-    if (document.body.classList.contains("mobile")) return;
     e.preventDefault(); e.stopPropagation();
     openPalette(e.shiftKey ? "commands" : "files");
   }, true);
@@ -3763,6 +3773,7 @@
   sbEl("sb-pos").addEventListener("click", () => goToLineDlg());
   sbEl("sb-git").addEventListener("click", () => {
     setSideView("scm");
+    Mobile.openFiles();
     sbRefreshGit(true);
   });
   sbEl("sb-term").addEventListener("click", () => {
@@ -3797,4 +3808,135 @@
   // ===== Dragbar sidebar =====
   function dragify(bar, cb) { bar.addEventListener("mousedown", (e) => { e.preventDefault(); let lx = e.clientX; const mv = (ev) => { cb(ev.clientX - lx); lx = ev.clientX; }; const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); }; document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); }); }
   dragify($("#drag-x"), (dx) => { const sb = $("#sidebar"); sb.style.width = Math.min(600, Math.max(140, sb.offsetWidth + dx)) + "px"; forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach(fitVisibleTerminal); });
+
+  // ===== Navigasi layar sempit: drawer file + bilah bawah Files/Editor/Terminal/Agent =====
+  function refitWorkarea() {
+    setTimeout(() => {
+      try { forEachEditor((ed) => ed.resize()); } catch (e) {}
+      try { Object.values(TERMS).forEach(fitVisibleTerminal); } catch (e) {}
+    }, 60);
+  }
+  function closeAiPanel() {
+    if (window.VRCloudAI && window.VRCloudAI.setOpen) window.VRCloudAI.setOpen(false);
+  }
+  function setDrawer(open) {
+    document.body.classList.toggle("drawer-open", !!open);
+    const burger = $("#mb-burger");
+    if (burger) burger.setAttribute("aria-expanded", open ? "true" : "false");
+    const back = $("#drawer-backdrop");
+    if (back) back.hidden = !open;
+    Mobile.syncNav();
+  }
+  function setMenusOpen(open) {
+    document.body.classList.toggle("menus-open", !!open);
+    const more = $("#mb-more");
+    if (more) more.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function focusExistingTerminal() {
+    if (!layout) return;
+    let hit = null;
+    walkLeaves(layout, (leaf) => {
+      if (hit || (leaf && leaf.agent)) return;
+      const t = leaf.tabs.find((x) => x.kind === "term");
+      if (t) hit = { leaf, t };
+    });
+    if (hit) setActiveTab(hit.leaf, hit.t.id);
+    else addTerminal();
+    refitWorkarea();
+  }
+  Mobile.afterOpenFile = function () {
+    if (!isNarrowView()) return;
+    setDrawer(false);
+    closeAiPanel();
+    Mobile.syncNav();
+    refitWorkarea();
+  };
+  Mobile.openFiles = function () {
+    if (!isNarrowView()) return;
+    closeAiPanel();
+    setDrawer(true);
+    Mobile.syncNav();
+  };
+  Mobile.showEditor = function () {
+    setDrawer(false);
+    closeAiPanel();
+    setMenusOpen(false);
+    Mobile.syncNav();
+    refitWorkarea();
+  };
+  Mobile.closeMenus = function () { setMenusOpen(false); };
+  Mobile.onAiToggle = function () { Mobile.syncNav(); };
+  Mobile.syncNav = function () {
+    const nav = $("#mob-nav"); if (!nav) return;
+    const aiOpen = !!(window.VRCloudAI && window.VRCloudAI.isOpen && window.VRCloudAI.isOpen());
+    const drawer = document.body.classList.contains("drawer-open");
+    let mode = "editor";
+    if (aiOpen) mode = "agent";
+    else if (drawer) mode = "files";
+    else if (activeLeaf) {
+      const t = activeLeaf.tabs.find((x) => x.id === activeLeaf.active);
+      if (t && (t.kind === "term" || t.kind === "ashell")) mode = "term";
+    }
+    nav.querySelectorAll("[data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === mode));
+  };
+
+  const burger = $("#mb-burger");
+  if (burger) burger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!isNarrowView()) return;
+    const open = !document.body.classList.contains("drawer-open");
+    if (open) { closeAiPanel(); setSideView(curSideView || "workspace"); }
+    setDrawer(open);
+    setMenusOpen(false);
+  });
+  const more = $("#mb-more");
+  if (more) more.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!isNarrowView()) return;
+    const open = !document.body.classList.contains("menus-open");
+    if (open) closeMenus();
+    setMenusOpen(open);
+  });
+  const backdrop = $("#drawer-backdrop");
+  if (backdrop) backdrop.addEventListener("click", () => { setDrawer(false); setMenusOpen(false); });
+  const mobNav = $("#mob-nav");
+  if (mobNav) mobNav.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-nav]"); if (!btn) return;
+    const dest = btn.dataset.nav;
+    if (dest === "files") {
+      if (document.body.classList.contains("drawer-open")) setDrawer(false);
+      else { setSideView("workspace"); Mobile.openFiles(); }
+    } else if (dest === "editor") {
+      Mobile.showEditor();
+    } else if (dest === "term") {
+      setDrawer(false);
+      closeAiPanel();
+      setMenusOpen(false);
+      focusExistingTerminal();
+      Mobile.syncNav();
+    } else if (dest === "agent") {
+      setDrawer(false);
+      setMenusOpen(false);
+      if (window.VRCloudAI && window.VRCloudAI.open) window.VRCloudAI.open();
+      Mobile.syncNav();
+    }
+  });
+
+  function onViewportChange() {
+    applyNarrowClass();
+    if (!isNarrowView()) {
+      setDrawer(false);
+      setMenusOpen(false);
+      const sb = $("#sidebar");
+      if (sb) sb.style.width = "";
+    }
+    Mobile.syncNav();
+    refitWorkarea();
+  }
+  let _narrowT = null;
+  window.addEventListener("resize", () => { clearTimeout(_narrowT); _narrowT = setTimeout(onViewportChange, 160); });
+  window.addEventListener("orientationchange", onViewportChange);
+  if (MQ_NARROW && MQ_NARROW.addEventListener) MQ_NARROW.addEventListener("change", onViewportChange);
+  else if (MQ_NARROW && MQ_NARROW.addListener) MQ_NARROW.addListener(onViewportChange);
+  Mobile.syncNav();
 })();
