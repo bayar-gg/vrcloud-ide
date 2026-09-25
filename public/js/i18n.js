@@ -51,6 +51,8 @@
     "Buka file (path relatif):": "Open file (relative path):", "Go To Line (nomor baris):": "Go To Line (line number):",
     "Nomor baris tidak valid.": "Invalid line number.", "Ctrl+G: pilih tab file terlebih dahulu": "Ctrl+G: select a file tab first",
     "File biner tidak bisa ditampilkan di editor.": "Binary files cannot be shown in the editor.",
+    "Tidak ada panel editor": "No editor pane",
+    "Gagal membuka editor:": "Failed to open editor:",
     "semua tersimpan": "all saved", "siap": "ready",
     "Perubahan disinkron ulang karena revision conflict": "Changes re-synced due to a revision conflict",
     "Sistem": "System", "Node.js": "Node.js", "Terminal": "Terminal", "Shell": "Shell", "Arsip ZIP/TAR": "ZIP/TAR archives",
@@ -334,7 +336,7 @@
   var PREFIX_EN = [
     ["tersimpan: ", "saved: "], ["upload selesai: ", "upload done: "], ["upload gagal: ", "upload failed: "], ["path disalin: ", "path copied: "], ["path: ", "path: "],
     ["digandakan: ", "duplicated: "], ["Arsip dibuat: ", "Archive created: "], ["Download siap: ", "Download ready: "], ["Extract selesai: ", "Extracted: "],
-    ["Menyiapkan download ", "Preparing download "], ["Gagal buka: ", "Failed to open: "], ["Gagal simpan: ", "Failed to save: "], ["Gagal simpan ", "Failed to save "],
+    ["Menyiapkan download ", "Preparing download "], ["Gagal buka: ", "Failed to open: "], ["Gagal membuka editor: ", "Failed to open editor: "], ["Gagal simpan: ", "Failed to save: "], ["Gagal simpan ", "Failed to save "],
     ["Gagal membuat terminal: ", "Failed to create terminal: "], ["Gagal membuat arsip: ", "Failed to create archive: "], ["Gagal download arsip: ", "Failed to download archive: "],
     ["Gagal extract: ", "Failed to extract: "], ["Gagal memuat diff: ", "Failed to load diff: "], ["Gagal memuat rule: ", "Failed to load rule: "],
     ["Gagal memuat skill: ", "Failed to load skill: "], ["Gagal mengekspor: ", "Failed to export: "], ["Gagal mengembalikan: ", "Failed to restore: "],

@@ -5,6 +5,17 @@ one commit on `main`; every update replaces it and bumps the version below.
 Installed servers pick up new versions with `vrcloud update` or the **Update**
 button in the menubar.
 
+## 3.0.17
+
+### Fixed
+
+- Opening a file on a phone no longer paints a white Ace sheet that looks like the
+  server crashed. Ambiance is loaded with the page (not a later dynamic fetch),
+  TextMate’s default `#fff` background is overridden to the dark editor colors,
+  and adding a tab no longer tears down `#workarea` (which blanked Ace on iOS).
+  Workers are disabled before the first session. A process-level log line is
+  written if Node would otherwise die silently. Desktop file open is unchanged.
+
 ## 3.0.16
 
 ### Fixed

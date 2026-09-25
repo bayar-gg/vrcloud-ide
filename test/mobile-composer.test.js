@@ -25,6 +25,7 @@ assert.ok(chat.includes("placeComposerMenu"), "chip menus are positioned above t
 assert.ok(app.includes("lockMobileViewport"), "mobile viewport lock exists");
 assert.ok(app.includes("shouldFocus = focus && !isNarrowView()"), "Ace is not auto-focused on phones");
 assert.ok(app.includes("useWorker: !mobile"), "Ace workers disabled on phones");
+assert.ok(app.includes("ace.config.set(\"useWorker\", false)"), "workers disabled before first session");
 assert.ok(css.includes(".ace_text-input { font-size: 16px !important; }"), "Ace textarea is 16px to avoid zoom");
 assert.ok(css.includes("body.narrow { position: fixed"), "narrow body is pinned");
 

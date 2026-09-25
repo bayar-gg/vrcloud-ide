@@ -112,10 +112,33 @@
   // Tema tetap (tidak ada pemilih tema): UI Classic Dark + syntax Ambiance.
   const UI_THEME = "classic-dark";
   const SYNTAX_THEME = "ambiance";
+  const SYNTAX_THEME_MOD = "ace/theme/" + SYNTAX_THEME;
+  // theme-ambiance.js is a separate Ace file (preloaded in index.html). Without
+  // it, Ace stays on TextMate — a white sheet that looks like a crash on phones.
+  function applySyntaxTheme(ed) {
+    if (!ed) return;
+    try { ace.require(SYNTAX_THEME_MOD); } catch (e) {}
+    try { ed.setTheme(SYNTAX_THEME_MOD); } catch (e) {}
+    const paint = () => {
+      try {
+        const cl = ed.container && ed.container.classList;
+        if (cl && !cl.contains("ace-" + SYNTAX_THEME)) ed.setTheme(SYNTAX_THEME_MOD);
+      } catch (e) {}
+    };
+    setTimeout(paint, 0);
+    setTimeout(paint, 250);
+  }
 
   // ===== Ace helper =====
   ace.require("ace/ext/language_tools");
   const modelist = ace.require("ace/ext/modelist");
+  // Workers are extra script/blob loads. On phones they race the first file
+  // open and are unused anyway — disable before any session is created.
+  try {
+    if (window.matchMedia && window.matchMedia("(max-width: 768px)").matches) {
+      ace.config.set("useWorker", false);
+    }
+  } catch (e) {}
 
   // ===== State global =====
   const FILES = {};          // path -> { session, dirty, mode }
@@ -448,8 +471,20 @@
     });
     try { ed.session.setUseWorker(!mobile); } catch (e) {}
     ed.renderer.setShowGutter(!!ui.gutter);
-    ed.setTheme("ace/theme/" + SYNTAX_THEME);
-    ed.on("focus", () => { activeLeaf = leaf; markActiveLeaf(); });
+    applySyntaxTheme(ed);
+    if (mobile) {
+      try {
+        const ta = ed.textInput && ed.textInput.getElement && ed.textInput.getElement();
+        if (ta) {
+          ta.style.fontSize = "16px";
+          ta.setAttribute("autocapitalize", "off");
+          ta.setAttribute("autocomplete", "off");
+          ta.setAttribute("autocorrect", "off");
+          ta.setAttribute("spellcheck", "false");
+        }
+      } catch (e) {}
+    }
+    ed.on("focus", () => { activeLeaf = leaf; markActiveLeaf(); if (isNarrowView()) lockMobileViewport(); });
     // Pintasan IDE yang bertabrakan dengan bawaan Ace saat editor fokus:
     // Alt-L (Ace: fold) → terminal baru di folder aktif; Ctrl-G → dialog Go To Line kita.
     ed.commands.addCommand({ name: "vrcloudNewTerminalHere", bindKey: { win: "Alt-L", mac: "Alt-L" }, exec: () => addTerminal(null, curDir()) });
@@ -581,6 +616,7 @@
           try { FILES[tab.path].session.setUseWorker(!isNarrowView()); } catch (e) {}
           leaf._ed.setSession(FILES[tab.path].session);
         }
+        applySyntaxTheme(leaf._ed);
         edEl.style.display = "block"; host.style.display = "none";
         // On phones, auto-focusing Ace scrolls the hidden textarea into view
         // (often off-screen) and the browser zooms — the IDE looks blank/frozen.
@@ -779,8 +815,10 @@
     let file = FILES[p];
     if (!file) {
       const m = modelist.getModeForPath(name || basename(p));
-      const session = ace.createEditSession(doc.content || "", "ace/mode/" + (doc.mode || m.name || "text"));
+      const session = ace.createEditSession(doc.content || "");
       session.setUseSoftTabs(true);
+      try { session.setUseWorker(!isNarrowView()); } catch (e) {}
+      session.setMode("ace/mode/" + (doc.mode || m.name || "text"));
       file = FILES[p] = {
         session,
         dirty: !!doc.dirty,
@@ -792,7 +830,6 @@
         timer: null,
       };
       applyWrapToSession(session);
-      try { session.setUseWorker(!isNarrowView()); } catch (e) {}
       session.on("change", () => {
         if (file.applying) return;
         file.dirty = true;
@@ -828,25 +865,43 @@
       return installSharedDoc({ path: p, content: data.content, dirty: false, revision: 0 }, name);
     }
   }
-  async function openFile(p, name, gotoLine) {
-    // Satu path hanya boleh punya satu tab di seluruh layout, bukan per-pane.
-    const existing = findFileTab(p);
-    if (focusFileTab(existing, gotoLine)) return;
-    const requestedLeaf = userLeaf(); // file pengguna tidak pernah dibuka di pane agent
-    if (!FILES[p]) {
-      if (!OPENING[p]) OPENING[p] = requestSharedDoc(p, name);
-      try { await OPENING[p]; }
-      catch (e) { delete OPENING[p]; return alert("Gagal buka: " + e.message); }
-      delete OPENING[p];
-    }
-    // Permintaan kedua mungkin selesai ketika permintaan pertama sudah membuat tab.
-    const openedWhileLoading = findFileTab(p);
-    if (focusFileTab(openedWhileLoading, gotoLine)) return;
-    const leaf = findParent(layout, requestedLeaf._id, null) ? requestedLeaf : firstUserLeaf();
-    const tab = { id: ++tabSeq, kind: "file", path: p, name };
-    leaf.tabs.push(tab); renderLayout(); setActiveTab(leaf, tab.id);
+  function failOpen(err) {
+    const msg = "Gagal buka: " + ((err && err.message) || err);
+    if (isNarrowView()) setStatus(msg);
+    else alert(msg);
+    try { console.error(err); } catch (e) {}
+  }
+  function showNewFileTab(leaf, tab, gotoLine) {
+    leaf.tabs.push(tab);
+    // Rebuilding #workarea (innerHTML = "") detaches Ace. On iOS WebKit that
+    // can blank the editor into a white sheet. Reuse the live pane root.
+    if (leaf._root) renderLeafTabs(leaf);
+    else renderLayout();
+    setActiveTab(leaf, tab.id);
     if (gotoLine && leaf._ed) leaf._ed.gotoLine(gotoLine, 0, true);
     Mobile.afterOpenFile();
+  }
+  async function openFile(p, name, gotoLine) {
+    // Satu path hanya boleh punya satu tab di seluruh layout, bukan per-pane.
+    try {
+      const existing = findFileTab(p);
+      if (focusFileTab(existing, gotoLine)) return;
+      const requestedLeaf = userLeaf(); // file pengguna tidak pernah dibuka di pane agent
+      if (!FILES[p]) {
+        if (!OPENING[p]) OPENING[p] = requestSharedDoc(p, name);
+        try { await OPENING[p]; }
+        catch (e) { delete OPENING[p]; return failOpen(e); }
+        delete OPENING[p];
+      }
+      // Permintaan kedua mungkin selesai ketika permintaan pertama sudah membuat tab.
+      const openedWhileLoading = findFileTab(p);
+      if (focusFileTab(openedWhileLoading, gotoLine)) return;
+      const leaf = findParent(layout, requestedLeaf._id, null) ? requestedLeaf : firstUserLeaf();
+      if (!leaf) return failOpen(new Error("Tidak ada panel editor"));
+      showNewFileTab(leaf, { id: ++tabSeq, kind: "file", path: p, name }, gotoLine);
+    } catch (e) {
+      failOpen(e);
+    }
   }
   function pathOpenElsewhere(p, exceptTabId) {
     let n = 0; walkLeaves(layout, (l) => l.tabs.forEach((t) => { if (t.kind === "file" && t.path === p && t.id !== exceptTabId) n++; })); return n;
@@ -3141,7 +3196,6 @@
   //  REALTIME SESSION
   // ============================================================
   applyUITheme(UI_THEME);
-  const savedSyntax = SYNTAX_THEME;
   const AceRange = ace.require("ace/range").Range;
 
   // Badge menubar: nama OS server + titik status realtime (warna). Teks
@@ -3403,7 +3457,7 @@
       renderLayout();
       activateRestoredLeaves(message.activeLeafId);
       renderOpenFiles(); // daftar "File terbuka" mengikuti layout yang baru dimuat (termasuk kosong)
-      forEachEditor((ed) => ed.setTheme("ace/theme/" + savedSyntax));
+      forEachEditor((ed) => applySyntaxTheme(ed));
       applyUIState();
       restoreFloatTerms(); // terminal Run mengapung yang masih hidup di server
     } finally {
@@ -3967,6 +4021,11 @@
     lockMobileViewport();
     setTimeout(lockMobileViewport, 0);
   });
+  if (window.visualViewport) {
+    const pinVV = () => { if (isNarrowView()) lockMobileViewport(); };
+    try { window.visualViewport.addEventListener("scroll", pinVV); } catch (e) {}
+    try { window.visualViewport.addEventListener("resize", pinVV); } catch (e) {}
+  }
   function onViewportChange() {
     applyNarrowClass();
     if (!isNarrowView()) {
