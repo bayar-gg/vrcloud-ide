@@ -23,6 +23,10 @@
     "Pemakaian server saat ini — klik untuk spesifikasi lengkap": "Current server usage — click for full specifications",
     "Preferences": "Preferences", "Logout": "Logout",
     "Opsi": "Options", "Refresh": "Refresh",
+    "Buka file, Git, dan pencarian": "Open files, Git, and search",
+    "File, Edit, Find, dan menu lain": "File, Edit, Find, and other menus",
+    "Navigasi": "Navigation", "Tampilkan editor": "Show editor", "Tampilkan terminal": "Show terminal",
+    "Buka panel Agent": "Open Agent panel", "Menu": "Menu",
     "Lepas file di sini untuk upload": "Drop files here to upload",
     "Cari di workspace": "Search in workspace", "Ketik teks lalu Enter…": "Type text, then Enter…", "Cari": "Search",
     "mencari…": "searching…", "tidak ada hasil": "no results",
@@ -285,6 +289,7 @@
   // ----------------------------------------------------------- EN -> ID
   var EN_ID = {
     "File": "File", "Edit": "Edit", "Find": "Cari", "View": "Tampilan", "Run": "Jalankan", "Tools": "Alat", "Window": "Jendela",
+    "Files": "Berkas", "Editor": "Editor", "Menu": "Menu", "Navigation": "Navigasi",
     "Preferences": "Preferensi", "⚙ Preferences": "⚙ Preferensi", "Logout": "Keluar", "▶ Run": "▶ Jalankan", "Workspace": "Workspace", "Navigate": "Navigasi", "Search": "Cari",
     "OPEN FILES": "FILE TERBUKA", "FAVORITES": "FAVORIT", "WORKSPACE": "WORKSPACE",
     "Language:": "Bahasa:", "Version:": "Versi:",

@@ -306,6 +306,14 @@ The UI ships in **English** and **Indonesian**; switch it under Preferences. Dyn
 (tool cards, option chips, dialogs, the Remote Desktop panel) and the login page follow the
 same setting. Everything the agent reads is English regardless of the UI language.
 
+### Mobile and small screens
+
+The login page and IDE shell adapt below **768px** (and again below **480px**). Phones get a
+hamburger drawer for Files / Git / Search, a **Menu** overflow for File–Window, and a bottom
+bar for **Files · Editor · Terminal · Agent**. The desktop layout at **1024px and above** is
+unchanged. A hardware keyboard is still recommended for serious editing; the virtual keyboard
+can cover the lower editor on some mobile browsers.
+
 ## The AI agent
 
 The panel on the right (`Alt+A`) is an autonomous coding agent. Give it a task; it breaks it
