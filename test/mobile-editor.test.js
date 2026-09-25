@@ -26,9 +26,14 @@ assert.ok(css.includes(".pane-editor,") && css.includes(".ace_editor { display: 
 
 assert.ok(app.includes("if (isNarrowView()) return null;"), "Ace is not mounted on phones");
 assert.ok(app.includes("Narrow viewports stay editor-free"), "setActiveTab skips the editor sheet on phones");
+assert.ok(app.includes("if (isNarrowView() && t.kind === \"file\") return;"),
+  "file tabs are not shown in the mobile workarea");
 assert.ok(app.includes("Stay on Files / Agent / Terminal. Opening a file must not reveal Ace."),
   "file-open does not switch to the editor");
 assert.ok(app.includes("function setMobTerm"), "terminal is the only workarea reveal on phones");
+assert.ok(app.includes("function applyMobileLeafVisibility"), "empty editor leaves are hidden in terminal mode");
+assert.ok(css.includes("body.narrow .pane-empty { display: none !important; }"),
+  "empty editor welcome sheet is hidden on phones");
 assert.ok(app.includes("let mode = \"agent\""), "default mobile dest is Agent, not Editor");
 assert.ok(app.includes("window.VRCloudAI.open();"), "closing the file drawer returns to Agent");
 

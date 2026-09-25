@@ -881,6 +881,7 @@ body.side-search #sidebar-search { display: flex; }
   .pane-editor .ace-host,
   .ace_editor { display: none !important; }
   body.narrow:not(.mob-term) #workarea { display: none !important; }
+  body.narrow .pane-empty { display: none !important; }
   .split.row { flex-direction: column; }
   .split.row > .resizer { width: auto; height: 5px; cursor: row-resize; margin: -2px 0; }
 

@@ -313,6 +313,7 @@
       if (tt) setTimeout(() => fitVisibleTerminal(tt), 0);
     });
     markActiveLeaf();
+    applyMobileLeafVisibility();
   }
   // Tampilan xterm untuk tab terminal (interaktif) atau tab "Agent shell" (view-only).
   function termViewOf(tab) {
@@ -543,6 +544,8 @@
       lbl.innerHTML = ROBOT_PANE_SVG + "<span>Agent</span>"; bar.appendChild(lbl);
     }
     leaf.tabs.forEach((t) => {
+      // File tabs only exist to open Ace; on phones that pane is gone.
+      if (isNarrowView() && t.kind === "file") return;
       const el = document.createElement("div"); el.className = "pane-tab" + (t.id === leaf.active ? " active" : "");
       el.dataset.tabId = String(t.id);
       el.setAttribute("role", "tab");
@@ -3917,6 +3920,22 @@
   // for the terminal only; otherwise the workarea (and Ace) stay hidden.
   function setMobTerm(on) {
     document.body.classList.toggle("mob-term", !!(on && isNarrowView()));
+    applyMobileLeafVisibility();
+  }
+  // On phones the workarea is terminal-only. Hide sibling editor/empty leaves
+  // so the empty welcome sheet does not sit above the shell.
+  function applyMobileLeafVisibility() {
+    if (!layout) return;
+    const termOnly = isNarrowView() && document.body.classList.contains("mob-term");
+    walkLeaves(layout, (l) => {
+      if (!l._root) return;
+      if (!termOnly) { l._root.style.display = ""; return; }
+      const show = l.tabs.some((t) => t.kind === "term" || t.kind === "ashell" || t.kind === "abrowser");
+      l._root.style.display = show ? "" : "none";
+    });
+    document.querySelectorAll("#workarea .resizer").forEach((r) => {
+      r.style.display = termOnly ? "none" : "";
+    });
   }
   function refitWorkarea() {
     setTimeout(() => {
@@ -4039,6 +4058,7 @@
       setMenusOpen(false);
       setMobTerm(true);
       focusExistingTerminal();
+      applyMobileLeafVisibility();
       Mobile.syncNav();
     } else if (dest === "agent") {
       setDrawer(false);
