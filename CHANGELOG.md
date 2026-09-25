@@ -5,6 +5,19 @@ one commit on `main`; every update replaces it and bumps the version below.
 Installed servers pick up new versions with `vrcloud update` or the **Update**
 button in the menubar.
 
+## 3.0.16
+
+### Fixed
+
+- Composer toolbar on phones is compact again (one row: +, model pill, tool icons, mic,
+  send) instead of the oversized two-row 44px chrome. Invisible hit padding keeps taps
+  reliable without enlarging the glyphs. The model (`auto`) chip is clickable again —
+  menus are pinned above the chip so they are not clipped by the agent overlay.
+- Opening a file on a phone no longer blanks or freezes the IDE. Ace no longer
+  auto-focuses (which scrolled its hidden textarea off-screen and zoomed the page),
+  workers / live autocomplete / minimap are skipped on narrow viewports, and the
+  viewport is pinned so the workarea stays usable. Desktop file open is unchanged.
+
 ## 3.0.15
 
 ### Fixed

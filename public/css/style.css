@@ -866,6 +866,12 @@ body.side-search #sidebar-search { display: flex; }
   .pane-label { height: 40px; }
   .pane-editor canvas.minimap { display: none !important; }
   .pane-editor .ace-host { right: 0 !important; }
+  /* Ace uses a 0.5em hidden textarea. Font <16px makes mobile browsers zoom;
+     focusing it can also scroll the page so the workarea looks blank. */
+  .ace_text-input { font-size: 16px !important; }
+  .ace_editor, .ace-host, .pane-editor { touch-action: pan-y; }
+  html, body { overscroll-behavior: none; }
+  body.narrow { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; overflow: hidden; }
 
   .tree li > .row { min-height: 40px; padding: 6px 10px; }
   #openlist li { min-height: 40px; padding: 8px 10px; }

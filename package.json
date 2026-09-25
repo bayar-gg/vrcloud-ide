@@ -1,6 +1,6 @@
 {
   "name": "vrcloud-ide",
-  "version": "3.0.14",
+  "version": "3.0.16",
   "description": "VRCloud IDE - a persistent, realtime, AI-powered web IDE with computer use and remote desktop, self-hosted on your own server",
   "author": "Rahim AR <support@bayar.gg> (https://github.com/bayar-gg)",
   "homepage": "https://github.com/bayar-gg/vrcloud-ide#readme",
@@ -34,7 +34,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node test/session-store.test.js && node test/realtime-smoke.js && node test/grok-auth.test.js && node test/grok-agent.test.js && node test/ai-provider-grok.test.js"
+    "test": "node test/session-store.test.js && node test/realtime-smoke.js && node test/grok-auth.test.js && node test/grok-agent.test.js && node test/ai-provider-grok.test.js && node test/mobile-composer.test.js"
   },
   "dependencies": {
     "@cursor/sdk": "^1.0.31",

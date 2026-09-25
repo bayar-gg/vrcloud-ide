@@ -239,6 +239,13 @@
   const MQ_NARROW = window.matchMedia ? window.matchMedia("(max-width: 768px)") : null;
   function isNarrowView() { return !!(MQ_NARROW && MQ_NARROW.matches); }
   function applyNarrowClass() { document.body.classList.toggle("narrow", isNarrowView()); }
+  // Ace's hidden textarea is often positioned off-screen; focusing it on iOS/Chrome
+  // mobile scrolls the page so the IDE looks blank. Keep the viewport pinned.
+  function lockMobileViewport() {
+    if (!isNarrowView()) return;
+    try { window.scrollTo(0, 0); } catch (e) {}
+    try { document.documentElement.scrollTop = 0; document.body.scrollTop = 0; } catch (e) {}
+  }
   applyNarrowClass();
   const Mobile = {
     isNarrow: isNarrowView,
@@ -426,9 +433,20 @@
     if (leaf._ed) return leaf._ed;
     // Ace dipasang di anak .ace-host; .pane-editor jadi pembungkus untuk editor + minimap.
     const aceEl = document.createElement("div"); aceEl.className = "ace-host"; leaf._edEl.appendChild(aceEl);
-    leaf._edEl.classList.toggle("no-minimap", !ui.minimap);
+    const mobile = isNarrowView();
+    leaf._edEl.classList.toggle("no-minimap", !ui.minimap || mobile);
     const ed = ace.edit(aceEl);
-    ed.setOptions({ fontSize: ui.fontSize + "px", enableBasicAutocompletion: true, enableLiveAutocompletion: true, enableSnippets: true, showPrintMargin: !!ui.wrapMargin, useSoftTabs: true, tabSize: 2 });
+    ed.setOptions({
+      fontSize: ui.fontSize + "px",
+      enableBasicAutocompletion: !mobile,
+      enableLiveAutocompletion: !mobile,
+      enableSnippets: !mobile,
+      showPrintMargin: !!ui.wrapMargin,
+      useSoftTabs: true,
+      tabSize: 2,
+      useWorker: !mobile,
+    });
+    try { ed.session.setUseWorker(!mobile); } catch (e) {}
     ed.renderer.setShowGutter(!!ui.gutter);
     ed.setTheme("ace/theme/" + SYNTAX_THEME);
     ed.on("focus", () => { activeLeaf = leaf; markActiveLeaf(); });
@@ -438,7 +456,7 @@
     ed.commands.addCommand({ name: "vrcloudGotoLine", bindKey: { win: "Ctrl-G", mac: "Cmd-G" }, exec: () => goToLineDlg() });
     leaf._ed = ed;
     bindCursorSync(ed, leaf);
-    setupMinimap(leaf);
+    if (!mobile) setupMinimap(leaf);
     // Satu menu klik-kanan untuk editor: aksi edit standar + aksi AI (bila panel AI ada).
     leaf._edEl.addEventListener("contextmenu", (e) => {
       e.preventDefault(); e.stopPropagation();
@@ -556,11 +574,28 @@
     if (!tab) { edEl.style.display = "none"; host.style.display = "none"; empty.style.display = "flex"; updateTabSelection(); renderOpenFiles(); markActiveLeaf(); queueLayoutSync(); return; }
     empty.style.display = "none";
     if (tab.kind === "file") {
-      ensureLeafEditor(leaf);
-      bindCursorSync(leaf._ed, leaf);
-      leaf._ed.setSession(FILES[tab.path].session);
-      edEl.style.display = "block"; host.style.display = "none";
-      setTimeout(() => { leaf._ed.resize(); if (focus) leaf._ed.focus(); }, 0);
+      try {
+        ensureLeafEditor(leaf);
+        bindCursorSync(leaf._ed, leaf);
+        if (FILES[tab.path] && FILES[tab.path].session) {
+          try { FILES[tab.path].session.setUseWorker(!isNarrowView()); } catch (e) {}
+          leaf._ed.setSession(FILES[tab.path].session);
+        }
+        edEl.style.display = "block"; host.style.display = "none";
+        // On phones, auto-focusing Ace scrolls the hidden textarea into view
+        // (often off-screen) and the browser zooms — the IDE looks blank/frozen.
+        const shouldFocus = focus && !isNarrowView();
+        setTimeout(() => {
+          try { if (leaf._ed) leaf._ed.resize(); } catch (e) {}
+          if (shouldFocus) { try { leaf._ed.focus(); } catch (e) {} }
+          else if (isNarrowView()) lockMobileViewport();
+        }, 0);
+      } catch (err) {
+        edEl.style.display = "none";
+        empty.style.display = "flex";
+        setStatus("Gagal membuka editor: " + ((err && err.message) || err));
+        try { console.error(err); } catch (e) {}
+      }
     } else if (tab.kind === "abrowser") {
       const v = ensureBrowserView();
       host.appendChild(v.el); host.style.display = "block"; edEl.style.display = "none";
@@ -757,6 +792,7 @@
         timer: null,
       };
       applyWrapToSession(session);
+      try { session.setUseWorker(!isNarrowView()); } catch (e) {}
       session.on("change", () => {
         if (file.applying) return;
         file.dirty = true;
@@ -1109,6 +1145,7 @@
   ];
   function mmColor(type) { for (const [re, c] of MM_COLORS) if (re.test(type)) return c; return "#9a9a9a"; }
   function setupMinimap(leaf) {
+    if (isNarrowView()) { leaf._edEl.classList.add("no-minimap"); return; }
     const cv = document.createElement("canvas"); cv.className = "minimap"; cv.title = "Minimap \u2014 klik/seret untuk menggulir";
     leaf._edEl.appendChild(cv); leaf._mm = cv;
     const ed = leaf._ed;
@@ -1140,7 +1177,7 @@
   }
   function renderMinimap(leaf) {
     const cv = leaf._mm, ed = leaf._ed;
-    if (!cv || !ed || !ui.minimap || leaf._edEl.style.display === "none") return;
+    if (!cv || !ed || !ui.minimap || isNarrowView() || leaf._edEl.style.display === "none") return;
     const dpr = window.devicePixelRatio || 1;
     const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
     if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
@@ -1168,7 +1205,7 @@
     ctx.globalAlpha = 1; ctx.fillStyle = "rgba(255,255,255,.10)";
     ctx.fillRect(0, first * MM_LINE - offset, w, visible * MM_LINE);
   }
-  function refreshMinimaps() { walkLeaves(layout, (l) => { if (l._mm) { l._edEl.classList.toggle("no-minimap", !ui.minimap); if (l._mmSchedule) l._mmSchedule(); } }); }
+  function refreshMinimaps() { walkLeaves(layout, (l) => { if (l._edEl) l._edEl.classList.toggle("no-minimap", !ui.minimap || isNarrowView()); if (l._mm && !isNarrowView()) { if (l._mmSchedule) l._mmSchedule(); } }); }
 
   // ============================================================
   //  AGENT SHELL (view-only): cermin perintah shell yang dijalankan agent AI.
@@ -3812,6 +3849,7 @@
   // ===== Navigasi layar sempit: drawer file + bilah bawah Files/Editor/Terminal/Agent =====
   function refitWorkarea() {
     setTimeout(() => {
+      lockMobileViewport();
       try { forEachEditor((ed) => ed.resize()); } catch (e) {}
       try { Object.values(TERMS).forEach(fitVisibleTerminal); } catch (e) {}
     }, 60);
@@ -3848,6 +3886,8 @@
     if (!isNarrowView()) return;
     setDrawer(false);
     closeAiPanel();
+    setMenusOpen(false);
+    lockMobileViewport();
     Mobile.syncNav();
     refitWorkarea();
   };
@@ -3922,6 +3962,11 @@
     }
   });
 
+  document.addEventListener("focusin", () => {
+    if (!isNarrowView()) return;
+    lockMobileViewport();
+    setTimeout(lockMobileViewport, 0);
+  });
   function onViewportChange() {
     applyNarrowClass();
     if (!isNarrowView()) {
@@ -3929,6 +3974,9 @@
       setMenusOpen(false);
       const sb = $("#sidebar");
       if (sb) sb.style.width = "";
+    } else {
+      lockMobileViewport();
+      if (layout) walkLeaves(layout, (l) => { if (l._edEl) l._edEl.classList.add("no-minimap"); });
     }
     Mobile.syncNav();
     refitWorkarea();
