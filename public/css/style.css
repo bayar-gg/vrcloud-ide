@@ -1,5 +1,6 @@
 /* ===== Tema gelap ala Cloud9 (biru gelap) ===== */
 :root, body[data-ui-theme="flat-dark"] {
+  color-scheme: dark;
   --bg:        #16232e;   /* latar utama */
   --bg2:       #1b2b38;   /* panel */
   --bg3:       #223546;   /* elemen */
@@ -31,6 +32,23 @@ body[data-ui-theme="midnight"] {
 }
 /* Latar editor (tema syntax Ambiance) — dipakai komponen yang ingin senada dengan editor, mis. composer AI. */
 :root { --editor-bg: #202020; --editor-line: rgba(255,255,255,.09); --sel:#2a4b66; --hover:#3a5163; --code-bg:#0f1923; --input-line:#34506690; }
+/* Ace starts as TextMate (white #fff). If theme-ambiance.js is late or fails
+   (common on phones / tunnels), that white sheet looks like a crash. */
+.ace_editor.ace-tm,
+.ace-tm .ace_scroller,
+.ace-tm .ace_content { background-color: var(--editor-bg, #202020) !important; color: #e6e1cf !important; }
+.ace-tm .ace_gutter { background: #1a1a1a !important; color: #a8b1ba !important; }
+.ace-tm .ace_gutter-active-line { background: rgba(255,255,255,.08) !important; }
+.ace-tm .ace_cursor { color: #e6e1cf !important; }
+.ace-tm .ace_marker-layer .ace_active-line { background: rgba(255,255,255,.06) !important; }
+.ace-tm .ace_marker-layer .ace_selection { background: rgba(77,163,255,.28) !important; }
+.ace-tm .ace_print-margin { background: rgba(255,255,255,.06) !important; }
+.ace-tm .ace_identifier, .ace-tm .ace_keyword, .ace-tm .ace_meta,
+.ace-tm .ace_storage, .ace-tm .ace_text { color: #e6e1cf !important; }
+.ace-tm .ace_string { color: #97c38b !important; }
+.ace-tm .ace_constant, .ace-tm .ace_numeric { color: #d8a657 !important; }
+.ace-tm .ace_comment { color: #7a7a7a !important; }
+.ace-tm .ace_variable, .ace-tm .ace_support { color: #8ab4d8 !important; }
 /* Nomor baris Ambiance terlalu redup: terangkan, baris aktif lebih terang lagi. */
 .ace-ambiance .ace_gutter { color: #a8b1ba !important; }
 .ace-ambiance .ace_gutter .ace_gutter-cell { color: #a8b1ba; }
@@ -53,7 +71,7 @@ body[data-ui-theme="midnight"] .menu-pop .mi:hover { background: var(--accent); 
 body[data-ui-theme="midnight"] .leaf.active { border-color: rgba(77,163,255,.55); }
 body[data-ui-theme="midnight"] .pane-tab.active { box-shadow: inset 0 2px 0 var(--accent2); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; -webkit-text-size-adjust: 100%; }
+html, body { height: 100%; -webkit-text-size-adjust: 100%; color-scheme: dark; background: var(--bg, #1e1e1e); }
 body {
   font-family: "Segoe UI", Ubuntu, "Helvetica Neue", Arial, sans-serif;
   font-size: 13px;
@@ -217,9 +235,10 @@ body.hide-openfiles #openfiles-wrap { display: none; }
 .leaf.agent .pane-empty svg { vertical-align: -2px; color: var(--accent2); }
 .pane-body { position: relative; flex: 1; min-height: 0; min-width: 0; background: var(--bg); }
 .pane-editor, .pane-term-host, .pane-empty { position: absolute; inset: 0; }
-.pane-editor { display: none; }
+.pane-editor { display: none; background: var(--editor-bg, #202020); }
 /* Editor + minimap: Ace di .ace-host, minimap kanvas 84px di kanan */
-.pane-editor .ace-host { position: absolute; top: 0; bottom: 0; left: 0; right: 84px; }
+.pane-editor .ace-host { position: absolute; top: 0; bottom: 0; left: 0; right: 84px; background: var(--editor-bg, #202020); }
+.ace_editor { background-color: var(--editor-bg, #202020); }
 .pane-editor canvas.minimap { position: absolute; top: 0; right: 0; bottom: 0; width: 84px; height: 100%; display: block;
   background: var(--editor-bg); border-left: 1px solid rgba(255,255,255,.06); cursor: pointer; }
 .pane-editor.no-minimap .ace-host { right: 0; }
@@ -869,7 +888,10 @@ body.side-search #sidebar-search { display: flex; }
   /* Ace uses a 0.5em hidden textarea. Font <16px makes mobile browsers zoom;
      focusing it can also scroll the page so the workarea looks blank. */
   .ace_text-input { font-size: 16px !important; }
-  .ace_editor, .ace-host, .pane-editor { touch-action: pan-y; }
+  .ace_editor, .ace-host, .pane-editor {
+    touch-action: pan-y;
+    background-color: var(--editor-bg, #202020);
+  }
   html, body { overscroll-behavior: none; }
   body.narrow { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; overflow: hidden; }
 

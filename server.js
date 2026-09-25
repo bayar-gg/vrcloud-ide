@@ -1485,6 +1485,14 @@ function shutdown() {
 }
 process.on("SIGTERM", () => { shutdown(); process.exit(0); });
 process.on("SIGINT", () => { shutdown(); process.exit(0); });
+function logFatal(kind, err) {
+  const msg = err && (err.stack || err.message) ? (err.stack || err.message) : String(err);
+  console.error("[vrcloud] " + kind + ": " + msg);
+}
+// Stay up and leave a line in the log. A phone "white crash" is usually the
+// Ace theme; if the process does die, this is how we tell the two apart.
+process.on("uncaughtException", (err) => { logFatal("uncaughtException", err); });
+process.on("unhandledRejection", (err) => { logFatal("unhandledRejection", err); });
 
 server.listen(PORT, HOST, () => {
   const scheme = USE_HTTPS ? "https" : "http";
