@@ -5,6 +5,18 @@ one commit on `main`; every update replaces it and bumps the version below.
 Installed servers pick up new versions with `vrcloud update` or the **Update**
 button in the menubar.
 
+## 3.0.14
+
+### Added
+
+- **Grok** as an AI provider via the operator's own Grok / xAI account. Sign in from
+  the AI settings panel (official device-code OAuth at `auth.x.ai` — the same flow as
+  `grok login --device-auth`). Session tokens stay on the server in
+  `data/grok-session.json` (encrypted, mode 0600) and can be signed out. No
+  `GROK_API_KEY` / `XAI_API_KEY` is required. The agent uses the same workspace tools
+  as Anthropic (files, shell, search, browser, computer use). Needs SuperGrok or
+  X Premium+; xAI may rate-limit or expire the session (re-login from settings).
+
 ## 3.0.12
 
 ### Changed

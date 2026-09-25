@@ -23,7 +23,7 @@ Only the current version on `main` is supported. There are no maintenance branch
 - `.env` contains the password and the session-signing secret. Keep it `chmod 600`.
   `vrcloud newpassword` rotates both and invalidates existing sessions.
 - `data/` contains unsaved editor text, AI conversations, API keys entered in the UI
-  (`ai-config.json`), the browser profile and screenshots. Restrict its permissions and
+  (`ai-config.json`), the Grok account session (`grok-session.json`), the browser profile and screenshots. Restrict its permissions and
   include it in backups deliberately.
 - The AI agent can run any command the service user can. Enable command approval for
   destructive patterns, use Ask mode for read-only sessions, and review changes before

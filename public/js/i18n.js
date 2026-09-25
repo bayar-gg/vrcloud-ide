@@ -223,6 +223,16 @@
     "⟳ Update": "⟳ Update", "Update tersedia": "Update available", "Cek update VRCloud": "Check for VRCloud updates", "Update VRCloud sekarang": "Update VRCloud now",
     "sk-ant-… (kosongkan = tidak diubah)": "sk-ant-… (leave empty = unchanged)",
     "Cursor (Cursor SDK)": "Cursor (Cursor SDK)", "Anthropic Claude (API key Anthropic)": "Anthropic Claude (Anthropic API key)",
+    "Grok (akun xAI)": "Grok (xAI account)", "Akun Grok / xAI": "Grok / xAI account",
+    "Masuk dengan Grok": "Sign in with Grok", "Keluar dari Grok": "Sign out of Grok", "Batalkan masuk": "Cancel sign-in",
+    "Putuskan akun Grok dari server ini?": "Disconnect the Grok account from this server?",
+    "Belum terhubung. Klik Masuk dengan Grok, lalu konfirmasi di browser.": "Not connected. Click Sign in with Grok, then confirm in the browser.",
+    "Masuk dengan akun Grok/xAI Anda sendiri (SuperGrok atau X Premium+). Server membuka alur resmi device-code di auth.x.ai; buka tautannya di browser apa pun, konfirmasi kode, lalu token disimpan di server (data/grok-session.json), bukan di browser. Tidak perlu API key.":
+      "Sign in with your own Grok/xAI account (SuperGrok or X Premium+). The server starts the official device-code flow at auth.x.ai; open the link in any browser, confirm the code, and the tokens stay on the server (data/grok-session.json), not in the browser. No API key is needed.",
+    "Key Cursor/Anthropic disimpan di server (data/ai-config.json) dan menimpa .env. Grok memakai login akun (bukan API key). Pilih model & opsi (Thinking/Effort/Context) lewat tombol model di bawah composer. Provider Anthropic dan Grok memakai tool workspace bawaan (baca/edit file, shell, pencarian, browser).":
+      "Cursor/Anthropic keys are stored on the server (data/ai-config.json) and override .env. Grok uses account login (not an API key). Choose the model & options (Thinking/Effort/Context) via the model button below the composer. The Anthropic and Grok providers run built-in workspace tools (read/edit files, shell, search, browser).",
+    "Grok: prefix prompt dikirim utuh setiap request. Caching sisi xAI (bila ada) tidak dikontrol dari sini.":
+      "Grok: the full prompt prefix is sent on every request. Any xAI-side caching is not controlled here.",
     "Simpan": "Save", "Hapus key": "Remove key", "Masukkan API key lalu Simpan.": "Enter the API key, then Save.",
     "Key disimpan di server (data/ai-config.json) dan menimpa .env. Pilih model & opsi (Thinking/Effort/Context) lewat tombol model di bawah composer.":
       "The key is stored on the server (data/ai-config.json) and overrides .env. Choose the model & options (Thinking/Effort/Context) via the model button below the composer.",
@@ -230,6 +240,7 @@
       "The key is stored on the server (data/ai-config.json) and overrides .env (CURSOR_API_KEY / ANTHROPIC_API_KEY). Choose the model & options (Thinking/Effort/Context) via the model button below the composer. The Anthropic provider runs Claude directly with built-in workspace tools (read/edit files, shell, search, browser).",
     "Status: modul @cursor/sdk belum terpasang di server.": "Status: the @cursor/sdk module is not installed on the server.",
     "Status: modul @cursor/sdk belum terpasang di server (pilih provider Anthropic Claude atau jalankan npm install).": "Status: the @cursor/sdk module is not installed on the server (choose the Anthropic Claude provider or run npm install).",
+    "Status: modul @cursor/sdk belum terpasang di server (pilih Anthropic Claude atau Grok, atau jalankan npm install).": "Status: the @cursor/sdk module is not installed on the server (choose Anthropic Claude or Grok, or run npm install).",
     "Pengaman perintah berbahaya": "Dangerous command guard",
     "Minta izin sebelum agent menjalankan perintah yang cocok pola di bawah": "Ask for approval before the agent runs commands matching the patterns below",
     "Pola (regex JavaScript, satu per baris, tidak peka huruf besar/kecil)": "Patterns (JavaScript regex, one per line, case-insensitive)",
@@ -326,6 +337,9 @@
     ["Gagal: ", "Failed: "], ["Kesalahan: ", "Error: "], ["Screenshot gagal: ", "Screenshot failed: "], ["Menjalankan sesi desktop di ", "Starting desktop session on "], ["Realtime error: ", "Realtime error: "], ["Indentasi terdeteksi: ", "Detected indentation: "], ["Indentasi: ", "Indentation: "],
     ["Cari di /", "Search in /"], ["Tersimpan di ", "Saved to "], ["Tersimpan. ", "Saved. "], ["Skill: ", "Skill: "], ["Rule: ", "Rule: "], ["Skill dipakai: ", "Skill used: "],
     ["File pendukung: ", "Supporting files: "], ["Status: aktif · sumber ", "Status: enabled · source "], ["Status: nonaktif · ", "Status: disabled · "],
+    ["Status: aktif · Grok", "Status: on · Grok"], ["Terhubung sebagai ", "Connected as "], ["Terhubung \u00b7 ", "Connected \u00b7 "],
+    ["Menunggu persetujuan di browser", "Waiting for approval in the browser"],
+    ["Gagal memulai masuk: ", "Failed to start sign-in: "], ["Gagal keluar: ", "Failed to sign out: "],
     ["Pengaturan model — ", "Model settings — "], ["Berpikir ", "Thinking "], ["Membaca ", "Reading "], ["Nama arsip ", "Archive name "],
     ["Belum ada runner untuk ", "No runner for "], ["Kembalikan seluruh workspace ke keadaan sebelum pesan ini", "Restore the whole workspace to before this message"],
     ["Terminal → ", "Terminal → "], ["Output terminal (", "Terminal output ("], ["Server: ", "Server: "], ["Agent: bekerja…", "Agent: working…"],
