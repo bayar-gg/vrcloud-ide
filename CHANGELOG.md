@@ -5,6 +5,62 @@ one commit on `main`; every update replaces it and bumps the version below.
 Installed servers pick up new versions with `vrcloud update` or the **Update**
 button in the menubar.
 
+## 3.0.19
+
+### Changed
+
+- Reverted the mobile-responsive shell and follow-up phone UX (PRs #4, #6, #7, #8, #9).
+  The desktop IDE is back to the pre-mobile layout: menubar, activity bar, sidebar,
+  Ace editor, terminal, and the original composer. No bottom nav, no file drawer,
+  no hidden editor on narrow viewports, and no phone-only composer tap-target CSS.
+- **Grok account login is kept** (PR #5 / 3.0.14): Settings → Grok → Sign in with Grok
+  still runs xAI device-code OAuth at `auth.x.ai`. Session tokens stay encrypted in
+  `data/grok-session.json`.
+
+## 3.0.18
+
+### Changed
+
+- On phones and narrow browsers (≤768px) the Ace text editor / workarea pane is gone.
+  The bottom bar is Files / Terminal / Agent; Agent (or the file drawer) fills the
+  space the editor used to occupy. Opening a file no longer switches to the editor —
+  it stays on the current mobile pane. Desktop (≥1024px) file open and the editor
+  are unchanged.
+
+## 3.0.17
+
+### Fixed
+
+- Opening a file on a phone no longer paints a white Ace sheet that looks like the
+  server crashed. Ambiance is loaded with the page (not a later dynamic fetch),
+  TextMate’s default `#fff` background is overridden to the dark editor colors,
+  and adding a tab no longer tears down `#workarea` (which blanked Ace on iOS).
+  Workers are disabled before the first session. A process-level log line is
+  written if Node would otherwise die silently. Desktop file open is unchanged.
+
+## 3.0.16
+
+### Fixed
+
+- Composer toolbar on phones is compact again (one row: +, model pill, tool icons, mic,
+  send) instead of the oversized two-row 44px chrome. Invisible hit padding keeps taps
+  reliable without enlarging the glyphs. The model (`auto`) chip is clickable again —
+  menus are pinned above the chip so they are not clipped by the agent overlay.
+- Opening a file on a phone no longer blanks or freezes the IDE. Ace no longer
+  auto-focuses (which scrolled its hidden textarea off-screen and zoomed the page),
+  workers / live autocomplete / minimap are skipped on narrow viewports, and the
+  viewport is pinned so the workarea stays usable. Desktop file open is unchanged.
+
+## 3.0.15
+
+### Fixed
+
+- On phones and narrow browsers (≤768px), every control on the AI composer toolbar is a
+  ~44×44 tap target. The model, Mode/Browser/Computer/Review/Skills, mic, and send buttons
+  no longer share one cramped row: tool icons wrap onto a second row (and can scroll
+  sideways if needed) so adjacent icons are not mis-tapped. Chip menus now open above the
+  agent overlay instead of behind it. Desktop (≥1024px) chrome is unchanged.
+
 ## 3.0.14
 
 ### Added
@@ -16,6 +72,15 @@ button in the menubar.
   `GROK_API_KEY` / `XAI_API_KEY` is required. The agent uses the same workspace tools
   as Anthropic (files, shell, search, browser, computer use). Needs SuperGrok or
   X Premium+; xAI may rate-limit or expire the session (re-login from settings).
+
+## 3.0.13
+
+### Changed
+
+- Phones and narrow browsers (≤768px, with a tighter 480px pass) get a usable IDE: viewport
+  and safe-area handling, a file drawer, a Menu overflow, touch-sized chrome, and a bottom bar
+  for Files / Editor / Terminal / Agent. The previous mobile mode that hid the IDE and left
+  only the AI chat is gone. Desktop (≥1024px) layout is unchanged.
 
 ## 3.0.12
 

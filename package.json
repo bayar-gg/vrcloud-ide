@@ -1,6 +1,6 @@
 {
   "name": "vrcloud-ide",
-  "version": "3.0.14",
+  "version": "3.0.19",
   "description": "VRCloud IDE - a persistent, realtime, AI-powered web IDE with computer use and remote desktop, self-hosted on your own server",
   "author": "Rahim AR <support@bayar.gg> (https://github.com/bayar-gg)",
   "homepage": "https://github.com/bayar-gg/vrcloud-ide#readme",
