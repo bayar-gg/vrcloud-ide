@@ -5,6 +5,16 @@ one commit on `main`; every update replaces it and bumps the version below.
 Installed servers pick up new versions with `vrcloud update` or the **Update**
 button in the menubar.
 
+## 3.0.15
+
+### Fixed
+
+- On phones and narrow browsers (≤768px), every control on the AI composer toolbar is a
+  ~44×44 tap target. The model, Mode/Browser/Computer/Review/Skills, mic, and send buttons
+  no longer share one cramped row: tool icons wrap onto a second row (and can scroll
+  sideways if needed) so adjacent icons are not mis-tapped. Chip menus now open above the
+  agent overlay instead of behind it. Desktop (≥1024px) chrome is unchanged.
+
 ## 3.0.14
 
 ### Added

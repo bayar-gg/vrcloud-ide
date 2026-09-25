@@ -436,6 +436,8 @@
     "#ai-input::placeholder{color:var(--text-dim,#7f929e);opacity:.8}" +
     "#ai-input:disabled{opacity:.5}" +
     "#ai-bar{display:flex;align-items:center;gap:6px;margin-top:6px;min-height:28px}" +
+    /* Desktop: wrapper is transparent so chips stay in the same row as + / model / mic / send. */
+    "#ai-bar-tools{display:contents}" +
     /* chip model + konfigurasi (mode, thinking, effort, context) */
     "#ai-model-chip .seg{opacity:.7;white-space:nowrap}#ai-model-chip .seg.mname{opacity:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:36px}" +
     "#ai-model-chip .sep{opacity:.35;margin:0 3px;flex:none}#ai-model-chip .cw{opacity:.5;margin-left:4px;font-size:10px;flex:none}" +
@@ -541,11 +543,14 @@
     /* statistik diff di riwayat */
     ".ai-hist-stats{font-size:10px;margin-left:6px}.ai-hist-stats .add{color:#3fb950}.ai-hist-stats .del{color:#ff6b74;margin-left:3px}" +
     /* layar sempit: panel overlay di atas workarea, di antara menubar dan bilah navigasi bawah */
-    "@media (max-width:768px){#ai-panel.open{position:fixed;top:calc(48px + env(safe-area-inset-top,0px));left:0;right:0;bottom:calc(52px + env(safe-area-inset-bottom,0px));width:100%!important;min-width:0;z-index:70;border-left:0}" +
+    "@media (max-width:768px){#ai-panel.open{position:fixed;top:calc(var(--mb-h,48px) + env(safe-area-inset-top,0px));left:0;right:0;bottom:calc(var(--mob-nav-h,52px) + env(safe-area-inset-bottom,0px));width:100%!important;min-width:0;z-index:70;border-left:0}" +
     "#ai-resize{display:none}#ai-close-btn{display:inline-flex;min-width:44px;min-height:44px;align-items:center;justify-content:center}" +
     "#ai-head{height:48px;padding:0 8px}#ai-head .ai-ibtn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}" +
-    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{left:6px;right:6px}#ai-bar .hint{display:none}" +
-    "#ai-input{font-size:16px}#ai-plus,#ai-send,#ai-stop,#ai-mic{min-width:44px;min-height:44px}}" +
+    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{left:6px;right:6px;bottom:168px}#ai-bar .hint{display:none}" +
+    "#ai-input{font-size:16px}#ai-plus,#ai-send,#ai-stop,#ai-mic{min-width:44px;min-height:44px}" +
+    /* Submenu is appended to <body> (z-index 11). Raise it above the agent overlay + bottom nav. */
+    "#ai-submenu{z-index:96;width:min(360px,calc(100vw - 16px))}" +
+    "#ai-submenu .ai-sub-item,#ai-plusmenu .it{min-height:44px;padding-top:10px;padding-bottom:10px}}" +
     "@media (max-width:480px){#menubar .mb-ai{display:none!important}}" +
     ".ai-ico{vertical-align:-2px;margin-right:4px;flex:none}" +
     ".ai-chip.skill .ai-chip-nm{display:inline-flex;align-items:center}.ai-chip.skill .ai-ico{color:var(--accent2,#4da3ff)}" +
@@ -657,7 +662,37 @@
     "#menubar .mb-ai{cursor:pointer;user-select:none;padding:2px 8px;border-radius:4px;font-size:12px;display:inline-flex;align-items:center;gap:5px}" +
     "#menubar .mb-ai .ai-ico,#ai-head .ai-title .spark .ai-ico,.ai-msg.ai .who .spark .ai-ico,.ai-empty .big .ai-ico{margin:0;vertical-align:middle;display:block}" +
     "#menubar .mb-ai:hover{background:var(--bg3,#22384a)}" +
-    "#menubar .mb-ai.active{background:var(--accent,#2f6feb);color:#fff}";
+    "#menubar .mb-ai.active{background:var(--accent,#2f6feb);color:#fff}" +
+    /* Phone / tablet composer: ~44px hit targets, tools on a second row (scroll if needed).
+       Placed last so these beat the compact desktop chip sizes above. Desktop ≥1024 is unchanged. */
+    "@media (max-width:768px){" +
+    "#ai-composer{position:relative;z-index:4;padding:8px 10px 12px;pointer-events:auto}" +
+    "#ai-box{overflow:visible}" +
+    "#ai-bar{flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:8px;min-height:44px;" +
+    "touch-action:manipulation;position:relative;z-index:2;pointer-events:auto}" +
+    "#ai-plus{order:1}#ai-model-chip{order:2}#ai-bar .grow{order:3;flex:1 1 8px;min-width:4px}" +
+    "#ai-mic{order:4}#ai-stop{order:5}#ai-send{order:6}" +
+    "#ai-bar-tools{display:flex;flex:1 1 100%;order:20;align-items:center;justify-content:space-between;" +
+    "gap:8px;min-width:0;max-width:100%;min-height:44px;overflow-x:auto;overflow-y:hidden;" +
+    "-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none;" +
+    "padding:2px 0;pointer-events:auto}" +
+    "#ai-bar-tools::-webkit-scrollbar{display:none}" +
+    "#ai-plus,#ai-model-chip,#ai-bar-tools .ai-optchip,#ai-skills-btn,#ai-mic,#ai-send,#ai-stop{" +
+    "min-width:44px;min-height:44px;flex:none;pointer-events:auto;-webkit-tap-highlight-color:transparent}" +
+    "#ai-plus{width:44px;height:44px;font-size:22px;border-radius:10px}" +
+    "#ai-model-chip{height:44px;padding:0 14px;flex:0 1 auto;max-width:min(42vw,180px)}" +
+    "#ai-panel.narrow #ai-model-chip{min-width:72px}" +
+    "#ai-panel.narrow .ai-optchip,#ai-panel.narrow #ai-skills-btn{" +
+    "width:44px;height:44px;padding:0;gap:0;justify-content:center}" +
+    "#ai-bar-tools .ai-ico,#ai-skills-btn .ai-ico{margin-right:0}" +
+    "#ai-mic,.ai-round,#ai-send,#ai-stop{width:44px;height:44px}" +
+    "}" +
+    "@media (max-width:480px){" +
+    "#ai-bar{gap:8px 12px}" +
+    "#ai-bar-tools{gap:10px}" +
+    "#ai-model-chip{max-width:min(36vw,130px)}" +
+    "#ai-composer{padding:8px 8px 10px}" +
+    "}";
 
   function injectStyle() {
     var st = document.createElement("style");
@@ -1045,24 +1080,27 @@
     modelChip = el("span"); modelChip.id = "ai-model-chip"; modelChip.title = "Pengaturan model"; modelChip.textContent = "model";
     modelChip.addEventListener("click", function (e) { e.stopPropagation(); toggleModelPop(); });
     bar.appendChild(modelChip);
+    // Group tool chips so phones can put them on a second row without shrinking hit targets.
+    var tools = el("div"); tools.id = "ai-bar-tools";
     // Dua tombol terpisah di samping Skills: Mode (Agent/Plan/Ask) dan Browser tools (Auto/On/Off).
     modeChip = el("span", "ai-optchip"); modeChip.id = "ai-mode-chip"; modeChip.title = "Mode agent: Agent (rencanakan & kerjakan), Plan (hanya rencana), Ask (baca-saja)";
     modeChip.addEventListener("click", function (e) { e.stopPropagation(); toggleChipMenu(modeChip, "mode"); });
-    bar.appendChild(modeChip);
+    tools.appendChild(modeChip);
     browserChip = el("span", "ai-optchip"); browserChip.id = "ai-browser-chip"; browserChip.title = "Browser tools: Auto (agent memutuskan), On (utamakan browser untuk tugas web), Off (dimatikan)";
     browserChip.addEventListener("click", function (e) { e.stopPropagation(); toggleChipMenu(browserChip, "browser"); });
-    bar.appendChild(browserChip);
+    tools.appendChild(browserChip);
     // Computer use (desktop_*): Auto / On / Off — agent melihat & mengendalikan desktop server.
     desktopChip = el("span", "ai-optchip"); desktopChip.id = "ai-desktop-chip"; desktopChip.title = "Computer use: Auto (agent memutuskan), On (utamakan GUI desktop), Off (dimatikan)";
     desktopChip.addEventListener("click", function (e) { e.stopPropagation(); toggleChipMenu(desktopChip, "desktop"); });
-    bar.appendChild(desktopChip);
+    tools.appendChild(desktopChip);
     reviewChip = el("span", "ai-optchip"); reviewChip.id = "ai-review-chip";
     reviewChip.addEventListener("click", function (e) { e.stopPropagation(); setReviewOn(!reviewOn); });
-    bar.appendChild(reviewChip);
+    tools.appendChild(reviewChip);
     skillsBtn = el("span"); skillsBtn.id = "ai-skills-btn"; skillsBtn.title = "Skills agent: pakai skill untuk pesan ini, atau buat/kelola skill (.vrcloud-agent/skills). Ketik / di composer untuk memilih cepat.";
     skillsBtn.appendChild(svgIcon("skill", 11)); skillsBtn.appendChild(el("span", "lbl", "Skills"));
     skillsBtn.addEventListener("click", function (e) { e.stopPropagation(); toggleSkillsMenu(); });
-    bar.appendChild(skillsBtn);
+    tools.appendChild(skillsBtn);
+    bar.appendChild(tools);
     bar.appendChild(el("span", "grow"));
     bar.appendChild(el("span", "hint", "Enter \u21b5 \u00b7 @file \u00b7 /skill"));
     // Input suara (Web Speech API) — hanya bila browser mendukung.
