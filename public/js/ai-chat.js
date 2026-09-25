@@ -585,6 +585,10 @@
     ".ai-cfg-actions .save{background:var(--accent,#2f6feb);color:#fff}" +
     ".ai-cfg-actions .ghost{background:var(--bg3,#22384a);color:var(--text,#dfe9f2)}" +
     ".ai-cfg-note{font-size:11px;opacity:.55;line-height:1.4;margin-top:2px}" +
+    ".ai-grok-box{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line,#2b4256);border-radius:8px;background:rgba(255,255,255,.02)}" +
+    ".ai-grok-code{font:600 22px/1.2 Consolas,'Cascadia Mono',Menlo,monospace;letter-spacing:2px;user-select:all;padding:8px 4px}" +
+    ".ai-grok-link{font-size:12px;word-break:break-all;color:var(--accent2,#4da3ff)}" +
+    "@media (max-width:768px){.ai-cfg-actions button,.ai-grok-box button{min-height:44px;padding:10px 14px;font-size:14px}.ai-grok-code{font-size:20px}}" +
     /* rahasia browser */
     ".ai-secrets{display:flex;flex-direction:column;gap:4px;margin:4px 0}" +
     ".ai-secret{display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--line,#2b4256);border-radius:6px;font-size:12px;min-width:0}" +
@@ -3197,6 +3201,7 @@
     if (!busy && (wasOn !== enabled || wasWhy !== statusReason) && !msgs.querySelector(".ai-changes, .ai-step.running")) renderConversation();
     if (popoverOpen) renderPopover();
     updateCfgStatus();
+    renderGrokAuth();
     renderGuardSettings();
     renderCpNote();
     fillVerify();
@@ -3655,7 +3660,7 @@
     var f0 = el("div", "ai-field");
     f0.appendChild(el("label", null, "Provider AI"));
     cfgProvider = el("select"); cfgProvider.id = "ai-cfg-provider";
-    [["cursor", "Cursor (Cursor SDK)"], ["anthropic", "Anthropic Claude (API key Anthropic)"]].forEach(function (o) {
+    [["cursor", "Cursor (Cursor SDK)"], ["anthropic", "Anthropic Claude (API key Anthropic)"], ["grok", "Grok (akun xAI)"]].forEach(function (o) {
       var op = el("option", null, o[1]); op.value = o[0]; cfgProvider.appendChild(op);
     });
     cfgProvider.addEventListener("change", function () {
@@ -3679,14 +3684,25 @@
     cfgAnthKey.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveConfigWeb(); } });
     f2.appendChild(cfgAnthKey); settings.appendChild(f2);
 
-    var act = el("div", "ai-cfg-actions");
+    var fg = el("div", "ai-field"); fg.id = "ai-cfg-field-grok";
+    fg.appendChild(el("label", null, "Akun Grok / xAI"));
+    var grokBox = el("div", "ai-grok-box"); grokBox.id = "ai-grok-box";
+    grokBox.appendChild(el("div", "ai-cfg-status", "")).id = "ai-grok-status";
+    var grokCode = el("div", "ai-grok-code"); grokCode.id = "ai-grok-code"; grokCode.hidden = true; grokBox.appendChild(grokCode);
+    var grokLink = el("a", "ai-grok-link"); grokLink.id = "ai-grok-link"; grokLink.target = "_blank"; grokLink.rel = "noopener noreferrer"; grokLink.hidden = true; grokBox.appendChild(grokLink);
+    var grokAct = el("div", "ai-cfg-actions"); grokAct.id = "ai-grok-actions"; grokBox.appendChild(grokAct);
+    grokBox.appendChild(el("div", "ai-cfg-note",
+      "Masuk dengan akun Grok/xAI Anda sendiri (SuperGrok atau X Premium+). Server membuka alur resmi device-code di auth.x.ai; buka tautannya di browser apa pun, konfirmasi kode, lalu token disimpan di server (data/grok-session.json), bukan di browser. Tidak perlu API key."));
+    fg.appendChild(grokBox); settings.appendChild(fg);
+
+    var act = el("div", "ai-cfg-actions"); act.id = "ai-cfg-key-actions";
     var saveB = el("button", "save", "Simpan"); saveB.type = "button"; saveB.addEventListener("click", saveConfigWeb);
     var clearB = el("button", "ghost", "Hapus key"); clearB.type = "button"; clearB.addEventListener("click", clearKey);
     act.appendChild(saveB); act.appendChild(clearB); settings.appendChild(act);
 
     settings.appendChild(el("div", "ai-cfg-note",
-      "Key disimpan di server (data/ai-config.json) dan menimpa .env (CURSOR_API_KEY / ANTHROPIC_API_KEY). Pilih model & opsi (Thinking/Effort/Context) lewat tombol model di bawah composer. " +
-      "Provider Anthropic memakai Claude langsung dengan tool workspace bawaan (baca/edit file, shell, pencarian, browser)."));
+      "Key Cursor/Anthropic disimpan di server (data/ai-config.json) dan menimpa .env. Grok memakai login akun (bukan API key). Pilih model & opsi (Thinking/Effort/Context) lewat tombol model di bawah composer. " +
+      "Provider Anthropic dan Grok memakai tool workspace bawaan (baca/edit file, shell, pencarian, browser)."));
 
     buildGuardSettings(settings);
     buildSecretsSettings(settings);
@@ -3751,11 +3767,16 @@
     if (cfgProvider && currentStatus && currentStatus.provider) cfgProvider.value = currentStatus.provider;
     syncProviderFields();
     updateCfgStatus();
+    renderGrokAuth();
     renderGuardSettings();
     loadSecrets();
     loadMemory();
     settings.classList.add("open");
-    setTimeout(function () { cfgKey.focus(); }, 30);
+    setTimeout(function () {
+      var p = cfgProvider && cfgProvider.value;
+      if (p === "grok") return;
+      if (cfgKey) cfgKey.focus();
+    }, 30);
   }
 
   // ---- Rahasia browser (kata sandi/token untuk browser_type({ secret })) ----
@@ -3893,11 +3914,14 @@
     var s = currentStatus || {};
     if (document.activeElement !== pc) pc.checked = s.promptCache !== false;
     var isAnth = s.provider === "anthropic";
+    var isGrok = s.provider === "grok";
     note.textContent = isAnth
       ? (s.promptCache !== false
         ? "Anthropic: system prompt, definisi tool, dan riwayat percakapan diberi cache breakpoint (ephemeral) sehingga request lanjutan membaca prefix dari cache — token cache dibaca ~10% harga input. Statistik cache tampil di pemakaian token sesi."
         : "Nonaktif: setiap request mengirim ulang seluruh prompt dengan harga input penuh.")
-      : "Cursor: caching prompt dikelola otomatis oleh layanan Cursor untuk semua model; pengaturan ini berpengaruh saat provider Anthropic dipakai.";
+      : (isGrok
+        ? "Grok: prefix prompt dikirim utuh setiap request. Caching sisi xAI (bila ada) tidak dikontrol dari sini."
+        : "Cursor: caching prompt dikelola otomatis oleh layanan Cursor untuk semua model; pengaturan ini berpengaruh saat provider Anthropic dipakai.");
   }
   function fillVerify() {
     var vi = document.getElementById("ai-verify-cmd"); if (!vi || document.activeElement === vi) return;
@@ -3917,20 +3941,98 @@
       : "Checkpoint nonaktif: git tidak ditemukan di server" + (c && c.error ? " (" + c.error + ")" : "") + ". Pasang git agar tombol Kembalikan tersedia.";
   }
 
-  // Tampilkan kolom key sesuai provider yang dipilih (keduanya tetap bisa diisi).
+  // Tampilkan kolom key / login sesuai provider yang dipilih.
   function syncProviderFields() {
     var p = (cfgProvider && cfgProvider.value) || (currentStatus && currentStatus.provider) || "cursor";
     var fc = document.getElementById("ai-cfg-field-cursor"), fa = document.getElementById("ai-cfg-field-anthropic");
-    if (fc) fc.style.opacity = p === "cursor" ? "1" : ".55";
-    if (fa) fa.style.opacity = p === "anthropic" ? "1" : ".55";
+    var fg = document.getElementById("ai-cfg-field-grok"), ka = document.getElementById("ai-cfg-key-actions");
+    if (fc) { fc.style.display = p === "grok" ? "none" : ""; fc.style.opacity = p === "cursor" ? "1" : ".55"; }
+    if (fa) { fa.style.display = p === "grok" ? "none" : ""; fa.style.opacity = p === "anthropic" ? "1" : ".55"; }
+    if (fg) fg.style.display = p === "grok" ? "" : "none";
+    if (ka) ka.style.display = p === "grok" ? "none" : "";
+    renderGrokAuth();
   }
-  function providerLabel(p) { return p === "anthropic" ? "Anthropic Claude" : "Cursor"; }
+  function providerLabel(p) { return p === "anthropic" ? "Anthropic Claude" : (p === "grok" ? "Grok" : "Cursor"); }
+  var grokPollTimer = 0;
+  function stopGrokPoll() { if (grokPollTimer) { clearInterval(grokPollTimer); grokPollTimer = 0; } }
+  function renderGrokAuth() {
+    var box = document.getElementById("ai-grok-box"); if (!box) return;
+    var s = currentStatus || {};
+    var g = s.grok || {};
+    var st = document.getElementById("ai-grok-status");
+    var code = document.getElementById("ai-grok-code");
+    var link = document.getElementById("ai-grok-link");
+    var act = document.getElementById("ai-grok-actions");
+    var pending = g.pending;
+    if (st) {
+      if (pending) st.textContent = "Menunggu persetujuan di browser\u2026 kode kedaluwarsa " + (pending.expiresAt ? new Date(pending.expiresAt).toLocaleTimeString() : "segera") + ".";
+      else if (g.connected) st.textContent = "Terhubung" + (g.emailMasked ? " sebagai " + g.emailMasked : "") + (g.expiresAt ? " \u00b7 sesi sampai " + new Date(g.expiresAt).toLocaleString() : "") + ".";
+      else st.textContent = "Belum terhubung. Klik Masuk dengan Grok, lalu konfirmasi di browser.";
+    }
+    if (code) {
+      code.hidden = !pending;
+      code.textContent = pending ? (pending.userCode || "") : "";
+    }
+    if (link) {
+      var href = pending && (pending.verificationUriComplete || pending.verificationUri);
+      link.hidden = !href;
+      if (href) { link.href = href; link.textContent = href; }
+    }
+    if (act) {
+      act.innerHTML = "";
+      if (pending) {
+        var cancel = el("button", "ghost", "Batalkan masuk"); cancel.type = "button";
+        cancel.addEventListener("click", function () { grokLogin({ cancel: true }); });
+        act.appendChild(cancel);
+      } else if (g.connected) {
+        var out = el("button", "ghost", "Keluar dari Grok"); out.type = "button";
+        out.addEventListener("click", function () {
+          if (!confirm("Putuskan akun Grok dari server ini?")) return;
+          apiJson("/api/ai/grok/logout", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: "{}" })
+            .then(function (st2) { applyStatus(st2); renderGrokAuth(); modelCatalog = []; })
+            .catch(function (e) { if (st) st.textContent = "Gagal keluar: " + e.message; });
+        });
+        act.appendChild(out);
+      } else {
+        var inn = el("button", "save", "Masuk dengan Grok"); inn.type = "button";
+        inn.addEventListener("click", function () { grokLogin({}); });
+        act.appendChild(inn);
+      }
+    }
+    if (pending && !grokPollTimer) {
+      grokPollTimer = setInterval(function () {
+        apiJson("/api/ai/status", { credentials: "same-origin" }).then(function (st2) {
+          applyStatus(st2);
+          renderGrokAuth();
+          var g2 = (st2 && st2.grok) || {};
+          if (!g2.pending) {
+            stopGrokPoll();
+            if (g2.connected) { modelCatalog = []; fetchModels().catch(function () {}); }
+          }
+        }).catch(function () {});
+      }, 2000);
+    }
+    if (!pending) stopGrokPoll();
+  }
+  function grokLogin(body) {
+    var st = document.getElementById("ai-grok-status");
+    apiJson("/api/ai/grok/login", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) })
+      .then(function (s) { applyStatus(s); renderGrokAuth(); })
+      .catch(function (e) { if (st) st.textContent = "Gagal memulai masuk: " + e.message; });
+  }
   function updateCfgStatus() {
     var line = document.getElementById("ai-cfg-status"); if (!line) return;
     var s = currentStatus || {};
     if (cfgProvider && s.provider && cfgProvider.value !== s.provider) { cfgProvider.value = s.provider; syncProviderFields(); }
     var prov = providerLabel(s.provider || "cursor");
-    if (!s.hasSdk) { line.textContent = "Status: modul @cursor/sdk belum terpasang di server (pilih provider Anthropic Claude atau jalankan npm install)."; return; }
+    if (s.provider === "grok") {
+      line.textContent = s.enabled
+        ? "Status: aktif \u00b7 Grok \u00b7 akun " + (s.keyMasked || "terhubung") + " \u00b7 model " + s.model
+        : "Status: nonaktif \u00b7 Grok \u00b7 " + (s.reason || "");
+      renderGrokAuth();
+      return;
+    }
+    if (!s.hasSdk) { line.textContent = "Status: modul @cursor/sdk belum terpasang di server (pilih Anthropic Claude atau Grok, atau jalankan npm install)."; return; }
     line.textContent = s.enabled
       ? "Status: aktif \u00b7 " + prov + " \u00b7 sumber " + s.source + " \u00b7 key " + (s.keyMasked || "") + " \u00b7 model " + s.model
       : "Status: nonaktif \u00b7 " + prov + " \u00b7 " + (s.reason || "");

@@ -832,6 +832,8 @@ aiChat = new AiChat({
   workspace: WORKSPACE,
   configFile: path.join(__dirname, "data", "ai-config.json"),
   storeFile: path.join(__dirname, "data", "ai-sessions.json"),
+  grokAuthFile: path.join(__dirname, "data", "grok-session.json"),
+  authSecret: AUTH_SECRET,
   checkpoints,
   browser,
   // Tool agent: otomasi browser headless + kelola/kendalikan remote desktop server.
@@ -1307,6 +1309,22 @@ app.post("/api/ai/config", (req, res) => {
   if (Object.prototype.hasOwnProperty.call(body, "promptCache")) config.promptCache = body.promptCache;
   if (Object.prototype.hasOwnProperty.call(body, "memory")) config.memory = body.memory;
   aiChat.setConfig(config).then(
+    (status) => res.json(status),
+    (e) => res.status(400).json({ error: e.message })
+  );
+});
+
+// Login akun Grok/xAI (device-code OAuth). Token disimpan di server, bukan di browser.
+app.post("/api/ai/grok/login", (req, res) => {
+  const cancel = !!(req.body && req.body.cancel);
+  const op = cancel ? aiChat.cancelGrokLogin() : aiChat.startGrokLogin();
+  Promise.resolve(op).then(
+    (status) => res.json(status),
+    (e) => res.status(400).json({ error: e.message })
+  );
+});
+app.post("/api/ai/grok/logout", (req, res) => {
+  aiChat.logoutGrok().then(
     (status) => res.json(status),
     (e) => res.status(400).json({ error: e.message })
   );

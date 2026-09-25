@@ -180,7 +180,7 @@ terminals do not survive a server restart.
 | Files | Tree with VS Code-style icons, inline new file/folder/rename, drag-and-drop upload (500 MB), download, copy/paste/duplicate, zip/unzip, favorites, Open Files list, project download |
 | Search | Workspace search with regex, case, whole word, include/exclude globs, per-hit and per-file replace |
 | Git | Status, stage/unstage, discard, commit, branch switch/create, init, log; branch and dirty count in the status bar |
-| AI agent | Cursor SDK or Anthropic Claude; plans with todos; file/shell/search/web tools; browser automation; computer use; checkpoints; per-file review; approvals; skills, rules, memory; queue; attachments; voice; history export/import |
+| AI agent | Cursor SDK, Anthropic Claude, or Grok (account login); plans with todos; file/shell/search/web tools; browser automation; computer use; checkpoints; per-file review; approvals; skills, rules, memory; queue; attachments; voice; history export/import |
 | Computer use | Screenshot, click, drag, move, type, key, scroll, wait, setup &mdash; grouped "Controlling the computer" card; Auto / On / Off chip |
 | Remote desktop | VNC-like streaming and control of the server desktop on Windows, Linux, macOS; one-click virtual desktop on headless Linux; mirrored across browsers |
 | Notifications | Bell with unread badge and history, toasts, optional browser notifications |
@@ -327,11 +327,15 @@ works, verifying with tests, builds or screenshots before it reports back.
 | --- | --- | --- |
 | **Cursor SDK** | `CURSOR_API_KEY` | Cursor's models (including Auto) and native tools through `@cursor/sdk`. Project rules, skills and hooks are loaded from `.vrcloud-agent/`. |
 | **Anthropic** | `ANTHROPIC_API_KEY` | Talks to Claude directly (Sonnet / Opus 4.x) with a tool set implemented in this repository. Extended thinking, effort level, 1M context and prompt caching are toggled from the model menu. |
+| **Grok** | Account login | Sign in with your own Grok / xAI account from the AI settings panel (official device-code OAuth at `auth.x.ai`, same idea as `grok login --device-auth`). No API key. SuperGrok or X Premium+. Workspace tools match the Anthropic provider. |
 
-Keys can be set in `.env` or entered in the agent settings panel (stored in
-`data/ai-config.json`). If both are present, pick the provider in the panel. The model chip
-in the composer shows the current model and its parameters (thinking, effort, context) and
-opens a searchable model list with per-provider logos.
+Cursor and Anthropic keys can be set in `.env` or entered in the agent settings panel
+(stored in `data/ai-config.json`). Grok uses **account login** instead: open settings,
+choose Grok, click **Sign in with Grok**, finish the xAI prompt in any browser, and the
+server stores the session under `data/grok-session.json` (not in the browser). If more than
+one provider is configured, pick it in the panel. The model chip in the composer shows the
+current model and its parameters (thinking, effort, context) and opens a searchable model
+list with per-provider logos.
 
 ### Tools
 
@@ -525,14 +529,15 @@ All configuration lives in `.env` next to `server.js`. Keep it `chmod 600`.
 | `SHELL_BIN` | `bash` / `powershell.exe` | Shell for terminals. |
 | `CURSOR_API_KEY` | | AI agent via the Cursor SDK. |
 | `ANTHROPIC_API_KEY` | | AI agent via Anthropic Claude. |
-| `AI_PROVIDER` | auto | `cursor` or `anthropic`. |
+| `AI_PROVIDER` | auto | `cursor`, `anthropic`, or `grok`. Grok signs in from the AI panel (no API key). |
 | `AI_MODEL` | `auto` | Default model id for the selected provider. |
 | `VRCLOUD_BROWSER` | auto-detect | Path to a Chromium-based browser for the browser agent. |
 | `VRCLOUD_ROOT_ACCESS` | `true` (installer) | Linux installer: `false` runs the service as a locked-down `vrcloud` user. |
 
 Anything set in the web UI (API keys, model and parameters, provider, mode, review, browser and
 computer use toggles, memory, approvals, verify command, notifications, prompt caching) is saved
-to `data/ai-config.json` and overrides the environment.
+to `data/ai-config.json` and overrides the environment. The Grok account session is stored
+separately in `data/grok-session.json` (encrypted with `AUTH_SECRET`, mode 0600).
 
 ## Day to day
 
@@ -594,7 +599,7 @@ Testing** download for the browser agent &middot; realtime and update status.
 
 ### Agent settings (gear in the AI panel)
 
-Provider and API keys &middot; model and parameters &middot; command approval on/off, regex
+Provider, API keys, and Grok account login &middot; model and parameters &middot; command approval on/off, regex
 patterns, approval timeout &middot; project memory on/off &middot; browser notifications
 &middot; verify command after edits &middot; prompt caching &middot; skills and rules editor
 (name, description, globs, auto-use, instructions).
@@ -619,7 +624,8 @@ port, so it can be scripted:
   `/api/download`, `/api/search`, `/api/replace`, `/api/files`
 - Git: `/api/git/status|diff|stage|unstage|discard|commit|checkout|init|log|branches`
 - Agent: `/api/ai/status|config|models|chat|live|stop|reset|approve|guard|restore|diff|review`,
-  sessions (`/api/ai/sessions`, `/api/ai/session`, rename, import), rules, skills, memory,
+  sessions (`/api/ai/sessions`, `/api/ai/session`, rename, import), Grok login (`/api/ai/grok/login|logout`),
+  rules, skills, memory,
   browser (`/api/ai/browser/*`, secrets, script, install)
 - System: `/api/info`, `/api/metrics`, `/api/runners`, `/api/update/*`, `/api/desktop/*`,
   `/api/session-status`
@@ -660,6 +666,8 @@ lib/agent-instructions.js every instruction the agent reads: system prompt, per-
                           browser / computer-use playbooks, memory rules, all tool descriptions (one file)
 lib/ai-chat.js            agent orchestration, sessions, approvals, review, skills, memory
 lib/anthropic-agent.js    Anthropic provider: Messages API + workspace tools
+lib/grok-auth.js          Grok / xAI account login (device-code OAuth at auth.x.ai)
+lib/grok-agent.js         Grok provider: Chat Completions + the same workspace tools
 lib/project-context.js    project snapshot injected into the agent prompt
 lib/browser-automation.js headless browser (CDP) tools, live view, take-over, Playwright export
 lib/browser-secrets.js    encrypted credential vault for browser automation
@@ -697,12 +705,13 @@ WebSocket upgrades (`/sync`, `/terminal`, `/desktop`). Set `HOST=127.0.0.1` and 
 at the proxy, or keep `HTTPS=true` and proxy to the HTTPS port.
 
 **Is my code sent anywhere?** Only what the AI agent reads is sent to the provider you
-configured (Cursor or Anthropic), and only while it works on a task. Editing, terminals, git
+configured (Cursor, Anthropic, or Grok), and only while it works on a task. Editing, terminals, git
 and remote desktop are entirely local.
 
 **Which models?** With Anthropic: the Claude 4.x family (Sonnet, Opus) with thinking, effort
 and 1M-context toggles. With Cursor: every model available to your Cursor account, including
-Auto.
+Auto. With Grok: the models your signed-in SuperGrok / X Premium+ account can see (typically
+Grok 4.6 and earlier), listed after you sign in.
 
 **Can the agent work while I am away?** Yes. Runs continue on the server after you close the
 tab; the notification bell and optional browser notifications tell you when it finished, and
