@@ -310,9 +310,9 @@ same setting. Everything the agent reads is English regardless of the UI languag
 
 The login page and IDE shell adapt below **768px** (and again below **480px**). Phones get a
 hamburger drawer for Files / Git / Search, a **Menu** overflow for File–Window, and a bottom
-bar for **Files · Editor · Terminal · Agent**. The desktop layout at **1024px and above** is
-unchanged. A hardware keyboard is still recommended for serious editing; the virtual keyboard
-can cover the lower editor on some mobile browsers.
+bar for **Files · Terminal · Agent**. The Ace text editor is desktop-only: on a phone the
+workarea is hidden and Agent (or the file drawer) fills that space. Opening a file does not
+reveal the editor. The desktop layout at **1024px and above** is unchanged.
 
 ## The AI agent
 

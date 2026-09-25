@@ -4268,6 +4268,7 @@
     }, true);
     document.addEventListener("visibilitychange", function () { if (!document.hidden && panel.classList.contains("open")) clearUnread(); });
     if (localStorage.getItem(OPEN_KEY) === "1") setOpen(true);
+    else if (window.VRCloudMobile && window.VRCloudMobile.isNarrow && window.VRCloudMobile.isNarrow()) setOpen(true);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
