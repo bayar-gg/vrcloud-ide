@@ -543,11 +543,11 @@
     /* statistik diff di riwayat */
     ".ai-hist-stats{font-size:10px;margin-left:6px}.ai-hist-stats .add{color:#3fb950}.ai-hist-stats .del{color:#ff6b74;margin-left:3px}" +
     /* layar sempit: panel overlay di atas workarea, di antara menubar dan bilah navigasi bawah */
-    "@media (max-width:768px){#ai-panel.open{position:fixed;top:calc(var(--mb-h,48px) + env(safe-area-inset-top,0px));left:0;right:0;bottom:calc(var(--mob-nav-h,52px) + env(safe-area-inset-bottom,0px));width:100%!important;min-width:0;z-index:70;border-left:0}" +
+    "@media (max-width:768px){#ai-panel.open{position:fixed;top:calc(var(--mb-h,48px) + env(safe-area-inset-top,0px));left:0;right:0;bottom:calc(var(--mob-nav-h,52px) + env(safe-area-inset-bottom,0px));width:100%!important;min-width:0;z-index:70;border-left:0;overflow:visible}" +
     "#ai-resize{display:none}#ai-close-btn{display:inline-flex;min-width:44px;min-height:44px;align-items:center;justify-content:center}" +
     "#ai-head{height:48px;padding:0 8px}#ai-head .ai-ibtn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}" +
-    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{left:6px;right:6px;bottom:196px}#ai-bar .hint{display:none}" +
-    "#ai-input{font-size:16px}#ai-plus,#ai-send,#ai-stop,#ai-mic{min-width:44px;min-height:44px}" +
+    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{left:6px;right:6px;z-index:96}#ai-bar .hint{display:none}" +
+    "#ai-input{font-size:16px}" +
     /* Submenu is appended to <body> (z-index 11). Raise it above the agent overlay + bottom nav. */
     "#ai-submenu{z-index:96;width:min(360px,calc(100vw - 16px))}" +
     "#ai-submenu .ai-sub-item,#ai-plusmenu .it{min-height:44px;padding-top:10px;padding-bottom:10px}}" +
@@ -663,37 +663,38 @@
     "#menubar .mb-ai .ai-ico,#ai-head .ai-title .spark .ai-ico,.ai-msg.ai .who .spark .ai-ico,.ai-empty .big .ai-ico{margin:0;vertical-align:middle;display:block}" +
     "#menubar .mb-ai:hover{background:var(--bg3,#22384a)}" +
     "#menubar .mb-ai.active{background:var(--accent,#2f6feb);color:#fff}" +
-    /* Phone / tablet composer: ~44px hit targets, tools on a second row (scroll if needed).
-       Placed last so these beat the compact desktop chip sizes above. Desktop ≥1024 is unchanged. */
+    /* Phone / tablet composer: compact single-row chrome (same look as desktop),
+       with invisible hit padding so chips stay tappable. Desktop ≥1024 is unchanged. */
     "@media (max-width:768px){" +
-    "#ai-composer{position:relative;z-index:4;padding:8px 10px 12px;pointer-events:auto}" +
-    "#ai-box{overflow:visible}" +
-    "#ai-bar{flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:8px;min-height:44px;" +
-    "touch-action:manipulation;position:relative;z-index:2;pointer-events:auto}" +
-    "#ai-plus{order:1}#ai-model-chip{order:2}#ai-bar .grow{order:3;flex:1 1 8px;min-width:4px}" +
-    "#ai-mic{order:4}#ai-stop{order:5}#ai-send{order:6}" +
-    "#ai-bar-tools{display:flex;flex:1 1 100%;order:20;align-items:center;justify-content:space-between;" +
-    "gap:8px;min-width:0;max-width:100%;min-height:44px;overflow-x:auto;overflow-y:hidden;" +
-    "-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none;" +
-    "padding:2px 0;pointer-events:auto}" +
-    "#ai-bar-tools::-webkit-scrollbar{display:none}" +
+    "#ai-composer{position:relative;z-index:5;padding:8px 10px 10px;pointer-events:auto;overflow:visible}" +
+    "#ai-box{overflow:visible;position:relative;z-index:2}" +
+    "#ai-bar{flex-wrap:nowrap;align-items:center;gap:6px;margin-top:6px;min-height:28px;" +
+    "touch-action:manipulation;position:relative;z-index:3;pointer-events:auto}" +
+    "#ai-bar-tools{display:flex;flex:0 1 auto;order:unset;align-items:center;justify-content:flex-start;" +
+    "gap:6px;min-width:0;max-width:none;min-height:0;overflow:visible;pointer-events:auto}" +
     "#ai-plus,#ai-model-chip,#ai-bar-tools .ai-optchip,#ai-skills-btn,#ai-mic,#ai-send,#ai-stop{" +
-    "min-width:44px;min-height:44px;flex:none;pointer-events:auto;-webkit-tap-highlight-color:transparent}" +
-    "#ai-plus{width:44px;height:44px;font-size:22px;border-radius:10px}" +
-    "#ai-model-chip{height:44px;padding:0 14px;flex:0 1 auto;max-width:min(42vw,180px)}" +
-    "#ai-panel.narrow #ai-model-chip{min-width:72px}" +
+    "position:relative;z-index:1;flex:none;pointer-events:auto;-webkit-tap-highlight-color:transparent;" +
+    "touch-action:manipulation}" +
+    "#ai-model-chip{z-index:4;overflow:visible;height:24px;padding:0 9px;flex:0 1 auto;" +
+    "max-width:min(34vw,120px);min-width:0;min-height:0}" +
+    "#ai-panel.narrow #ai-model-chip{min-width:0}" +
+    "#ai-plus{width:24px;height:24px;min-width:0;min-height:0;font-size:17px;border-radius:6px}" +
     "#ai-panel.narrow .ai-optchip,#ai-panel.narrow #ai-skills-btn{" +
-    "width:44px;height:44px;padding:0;gap:0;justify-content:center}" +
+    "width:24px;height:24px;min-width:0;min-height:0;padding:0;gap:0;justify-content:center}" +
     "#ai-bar-tools .ai-ico,#ai-skills-btn .ai-ico{margin-right:0}" +
-    "#ai-mic,.ai-round,#ai-send,#ai-stop{width:44px;height:44px}" +
-    /* Base #ai-submenu { z-index:11 } and popovers { bottom:60px } are earlier; these must come last. */
+    "#ai-mic,.ai-round,#ai-send,#ai-stop{width:28px;height:28px;min-width:0;min-height:0}" +
+    /* Invisible extra tap slop (does not enlarge the visible glyph). */ +
+    "#ai-plus::after,#ai-model-chip::after,#ai-bar-tools .ai-optchip::after," +
+    "#ai-skills-btn::after,#ai-mic::after,#ai-send::after,#ai-stop::after{" +
+    "content:\"\";position:absolute;top:-10px;bottom:-10px;left:-5px;right:-5px;z-index:0}" +
+    "#ai-model-chip::after{left:-8px;right:-8px}" +
     "#ai-submenu{z-index:96;width:min(360px,calc(100vw - 16px))}" +
-    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{bottom:196px}" +
+    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{z-index:96}" +
     "}" +
     "@media (max-width:480px){" +
-    "#ai-bar{gap:8px 12px}" +
-    "#ai-bar-tools{gap:10px}" +
-    "#ai-model-chip{max-width:min(36vw,130px)}" +
+    "#ai-bar{gap:5px}" +
+    "#ai-bar-tools{gap:5px}" +
+    "#ai-model-chip{max-width:min(30vw,110px)}" +
     "#ai-composer{padding:8px 8px 10px}" +
     "}";
 
@@ -1078,29 +1079,41 @@
     box.appendChild(input);
     var bar = el("div"); bar.id = "ai-bar";
     var plus = el("span", null, "+"); plus.id = "ai-plus"; plus.title = "Tambah konteks (seleksi editor, output terminal, file, gambar)";
+    plus.setAttribute("role", "button"); plus.tabIndex = 0;
+    plus.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
     plus.addEventListener("click", function (e) { e.stopPropagation(); togglePlusMenu(); });
     bar.appendChild(plus);
     modelChip = el("span"); modelChip.id = "ai-model-chip"; modelChip.title = "Pengaturan model"; modelChip.textContent = "model";
-    modelChip.addEventListener("click", function (e) { e.stopPropagation(); toggleModelPop(); });
+    modelChip.setAttribute("role", "button"); modelChip.tabIndex = 0;
+    modelChip.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+    modelChip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleModelPop(); });
+    modelChip.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleModelPop(); }
+    });
     bar.appendChild(modelChip);
     // Group tool chips so phones can put them on a second row without shrinking hit targets.
     var tools = el("div"); tools.id = "ai-bar-tools";
     // Dua tombol terpisah di samping Skills: Mode (Agent/Plan/Ask) dan Browser tools (Auto/On/Off).
     modeChip = el("span", "ai-optchip"); modeChip.id = "ai-mode-chip"; modeChip.title = "Mode agent: Agent (rencanakan & kerjakan), Plan (hanya rencana), Ask (baca-saja)";
+    modeChip.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
     modeChip.addEventListener("click", function (e) { e.stopPropagation(); toggleChipMenu(modeChip, "mode"); });
     tools.appendChild(modeChip);
     browserChip = el("span", "ai-optchip"); browserChip.id = "ai-browser-chip"; browserChip.title = "Browser tools: Auto (agent memutuskan), On (utamakan browser untuk tugas web), Off (dimatikan)";
+    browserChip.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
     browserChip.addEventListener("click", function (e) { e.stopPropagation(); toggleChipMenu(browserChip, "browser"); });
     tools.appendChild(browserChip);
     // Computer use (desktop_*): Auto / On / Off — agent melihat & mengendalikan desktop server.
     desktopChip = el("span", "ai-optchip"); desktopChip.id = "ai-desktop-chip"; desktopChip.title = "Computer use: Auto (agent memutuskan), On (utamakan GUI desktop), Off (dimatikan)";
+    desktopChip.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
     desktopChip.addEventListener("click", function (e) { e.stopPropagation(); toggleChipMenu(desktopChip, "desktop"); });
     tools.appendChild(desktopChip);
     reviewChip = el("span", "ai-optchip"); reviewChip.id = "ai-review-chip";
+    reviewChip.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
     reviewChip.addEventListener("click", function (e) { e.stopPropagation(); setReviewOn(!reviewOn); });
     tools.appendChild(reviewChip);
     skillsBtn = el("span"); skillsBtn.id = "ai-skills-btn"; skillsBtn.title = "Skills agent: pakai skill untuk pesan ini, atau buat/kelola skill (.vrcloud-agent/skills). Ketik / di composer untuk memilih cepat.";
     skillsBtn.appendChild(svgIcon("skill", 11)); skillsBtn.appendChild(el("span", "lbl", "Skills"));
+    skillsBtn.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
     skillsBtn.addEventListener("click", function (e) { e.stopPropagation(); toggleSkillsMenu(); });
     tools.appendChild(skillsBtn);
     bar.appendChild(tools);
@@ -1249,7 +1262,30 @@
     item("Gambar / file dari komputer", "", function () { var f = document.getElementById("ai-file-in"); if (f) f.click(); });
     panel.appendChild(plusMenu);
   }
-  function togglePlusMenu() { if (plusMenu.classList.contains("open")) closePlusMenu(); else { closeMention(); closeModelPop(); plusMenu.classList.add("open"); } }
+  function isNarrowComposer() { return !!(window.matchMedia && window.matchMedia("(max-width: 768px)").matches); }
+  // Chip menus live inside #ai-panel (overflow:hidden on desktop). On phones the
+  // overlay is position:fixed; pin the menu to the viewport above the chip so a
+  // tap is not swallowed and the menu is not clipped behind the composer.
+  function placeComposerMenu(el, anchor) {
+    if (!el || !isNarrowComposer()) return;
+    var r = (anchor || modelChip).getBoundingClientRect();
+    el.style.position = "fixed";
+    el.style.left = "6px";
+    el.style.right = "6px";
+    el.style.bottom = "auto";
+    el.style.zIndex = "96";
+    var h = el.offsetHeight || 180;
+    var top = r.top - h - 8;
+    if (top < 8) top = Math.min(Math.max(8, r.bottom + 8), Math.max(8, window.innerHeight - h - 8));
+    el.style.top = Math.max(8, top) + "px";
+  }
+  function togglePlusMenu() {
+    if (plusMenu.classList.contains("open")) closePlusMenu();
+    else {
+      closeMention(); closeModelPop(); plusMenu.classList.add("open");
+      placeComposerMenu(plusMenu, document.getElementById("ai-plus"));
+    }
+  }
   function closePlusMenu() { if (plusMenu) plusMenu.classList.remove("open"); }
 
   function addEditorSelection() {
@@ -1436,7 +1472,8 @@
     closeMention(); closeModelPop(); closePlusMenu(); closeHistory();
     skillsMenu.classList.add("open");
     renderSkillsMenu();
-    loadSkills().then(renderSkillsMenu).catch(function () {});
+    placeComposerMenu(skillsMenu, skillsBtn);
+    loadSkills().then(function () { renderSkillsMenu(); placeComposerMenu(skillsMenu, skillsBtn); }).catch(function () {});
   }
   var skillsTab = "skills", rulesCache = [];
   function loadRules() {
@@ -3576,7 +3613,8 @@
   function openModelPop() {
     if (settings) settings.classList.remove("open"); closeHistory();
     popoverOpen = true; popover.classList.add("open"); renderPopover();
-    if (enabled && !modelCatalog.length) fetchModels().then(renderPopover).catch(function () {});
+    placeComposerMenu(popover, modelChip);
+    if (enabled && !modelCatalog.length) fetchModels().then(function () { renderPopover(); placeComposerMenu(popover, modelChip); }).catch(function () {});
   }
 
   function paramValue(p) {
@@ -3664,6 +3702,7 @@
       var link = el("span", "ai-link", "Atur API key"); link.addEventListener("click", function () { closeModelPop(); openSettings(); });
       note.appendChild(link); popover.appendChild(note);
     }
+    if (popoverOpen) placeComposerMenu(popover, modelChip);
   }
 
   // Simpan opsi model/mode tanpa merender ulang seluruh panel.
