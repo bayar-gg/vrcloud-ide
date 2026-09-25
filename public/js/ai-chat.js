@@ -546,7 +546,7 @@
     "@media (max-width:768px){#ai-panel.open{position:fixed;top:calc(var(--mb-h,48px) + env(safe-area-inset-top,0px));left:0;right:0;bottom:calc(var(--mob-nav-h,52px) + env(safe-area-inset-bottom,0px));width:100%!important;min-width:0;z-index:70;border-left:0}" +
     "#ai-resize{display:none}#ai-close-btn{display:inline-flex;min-width:44px;min-height:44px;align-items:center;justify-content:center}" +
     "#ai-head{height:48px;padding:0 8px}#ai-head .ai-ibtn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}" +
-    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{left:6px;right:6px;bottom:168px}#ai-bar .hint{display:none}" +
+    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{left:6px;right:6px;bottom:196px}#ai-bar .hint{display:none}" +
     "#ai-input{font-size:16px}#ai-plus,#ai-send,#ai-stop,#ai-mic{min-width:44px;min-height:44px}" +
     /* Submenu is appended to <body> (z-index 11). Raise it above the agent overlay + bottom nav. */
     "#ai-submenu{z-index:96;width:min(360px,calc(100vw - 16px))}" +
@@ -686,6 +686,9 @@
     "width:44px;height:44px;padding:0;gap:0;justify-content:center}" +
     "#ai-bar-tools .ai-ico,#ai-skills-btn .ai-ico{margin-right:0}" +
     "#ai-mic,.ai-round,#ai-send,#ai-stop{width:44px;height:44px}" +
+    /* Base #ai-submenu { z-index:11 } and popovers { bottom:60px } are earlier; these must come last. */
+    "#ai-submenu{z-index:96;width:min(360px,calc(100vw - 16px))}" +
+    "#ai-modelpop,#ai-skillsmenu,#ai-mention,#ai-plusmenu{bottom:196px}" +
     "}" +
     "@media (max-width:480px){" +
     "#ai-bar{gap:8px 12px}" +
