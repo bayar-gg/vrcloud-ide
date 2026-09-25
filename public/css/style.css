@@ -874,7 +874,13 @@ body.side-search #sidebar-search { display: flex; }
   }
   body.drawer-open #drawer-backdrop { display: block; }
 
-  #content { min-width: 0; width: 100%; }
+  #content { min-width: 0; width: 100%; background: var(--bg); }
+  /* Ace / workarea is not a mobile pane. Terminal re-shows #workarea via body.mob-term. */
+  #mob-nav [data-nav="editor"] { display: none !important; }
+  .pane-editor,
+  .pane-editor .ace-host,
+  .ace_editor { display: none !important; }
+  body.narrow:not(.mob-term) #workarea { display: none !important; }
   .split.row { flex-direction: column; }
   .split.row > .resizer { width: auto; height: 5px; cursor: row-resize; margin: -2px 0; }
 

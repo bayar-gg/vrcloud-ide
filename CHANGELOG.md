@@ -5,6 +5,16 @@ one commit on `main`; every update replaces it and bumps the version below.
 Installed servers pick up new versions with `vrcloud update` or the **Update**
 button in the menubar.
 
+## 3.0.18
+
+### Changed
+
+- On phones and narrow browsers (≤768px) the Ace text editor / workarea pane is gone.
+  The bottom bar is Files / Terminal / Agent; Agent (or the file drawer) fills the
+  space the editor used to occupy. Opening a file no longer switches to the editor —
+  it stays on the current mobile pane. Desktop (≥1024px) file open and the editor
+  are unchanged.
+
 ## 3.0.17
 
 ### Fixed

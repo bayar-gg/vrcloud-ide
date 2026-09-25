@@ -454,6 +454,9 @@
   }
   function ensureLeafEditor(leaf) {
     if (leaf._ed) return leaf._ed;
+    // Phones never mount Ace. The workarea is hidden and file-open stays on
+    // Files / Agent; rotating to a wide viewport creates the editor then.
+    if (isNarrowView()) return null;
     // Ace dipasang di anak .ace-host; .pane-editor jadi pembungkus untuk editor + minimap.
     const aceEl = document.createElement("div"); aceEl.className = "ace-host"; leaf._edEl.appendChild(aceEl);
     const mobile = isNarrowView();
@@ -610,6 +613,15 @@
     empty.style.display = "none";
     if (tab.kind === "file") {
       try {
+        // Narrow viewports stay editor-free: no Ace sheet, no workarea takeover.
+        if (isNarrowView()) {
+          edEl.style.display = "none";
+          host.style.display = "none";
+          empty.style.display = "none";
+          updateTabSelection(); renderOpenFiles(); markActiveLeaf(); queueLayoutSync();
+          Mobile.syncNav();
+          return;
+        }
         ensureLeafEditor(leaf);
         bindCursorSync(leaf._ed, leaf);
         if (FILES[tab.path] && FILES[tab.path].session) {
@@ -3900,7 +3912,12 @@
   function dragify(bar, cb) { bar.addEventListener("mousedown", (e) => { e.preventDefault(); let lx = e.clientX; const mv = (ev) => { cb(ev.clientX - lx); lx = ev.clientX; }; const up = () => { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); }; document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); }); }
   dragify($("#drag-x"), (dx) => { const sb = $("#sidebar"); sb.style.width = Math.min(600, Math.max(140, sb.offsetWidth + dx)) + "px"; forEachEditor((ed) => ed.resize()); Object.values(TERMS).forEach(fitVisibleTerminal); });
 
-  // ===== Navigasi layar sempit: drawer file + bilah bawah Files/Editor/Terminal/Agent =====
+  // ===== Navigasi layar sempit: drawer file + bilah bawah Files/Terminal/Agent =====
+  // The Ace/text editor is not a mobile pane. body.mob-term reveals #workarea
+  // for the terminal only; otherwise the workarea (and Ace) stay hidden.
+  function setMobTerm(on) {
+    document.body.classList.toggle("mob-term", !!(on && isNarrowView()));
+  }
   function refitWorkarea() {
     setTimeout(() => {
       lockMobileViewport();
@@ -3938,25 +3955,26 @@
   }
   Mobile.afterOpenFile = function () {
     if (!isNarrowView()) return;
-    setDrawer(false);
-    closeAiPanel();
+    // Stay on Files / Agent / Terminal. Opening a file must not reveal Ace.
     setMenusOpen(false);
     lockMobileViewport();
     Mobile.syncNav();
-    refitWorkarea();
   };
   Mobile.openFiles = function () {
     if (!isNarrowView()) return;
     closeAiPanel();
+    setMobTerm(false);
     setDrawer(true);
     Mobile.syncNav();
   };
   Mobile.showEditor = function () {
+    // Editor nav is hidden on phones; if anything still calls this, fill with Agent.
+    if (!isNarrowView()) return;
     setDrawer(false);
-    closeAiPanel();
+    setMobTerm(false);
     setMenusOpen(false);
+    if (window.VRCloudAI && window.VRCloudAI.open) window.VRCloudAI.open();
     Mobile.syncNav();
-    refitWorkarea();
   };
   Mobile.closeMenus = function () { setMenusOpen(false); };
   Mobile.onAiToggle = function () { Mobile.syncNav(); };
@@ -3964,13 +3982,13 @@
     const nav = $("#mob-nav"); if (!nav) return;
     const aiOpen = !!(window.VRCloudAI && window.VRCloudAI.isOpen && window.VRCloudAI.isOpen());
     const drawer = document.body.classList.contains("drawer-open");
-    let mode = "editor";
+    let mode = "agent";
     if (aiOpen) mode = "agent";
     else if (drawer) mode = "files";
-    else if (activeLeaf) {
+    else if (document.body.classList.contains("mob-term") || (activeLeaf && (function () {
       const t = activeLeaf.tabs.find((x) => x.id === activeLeaf.active);
-      if (t && (t.kind === "term" || t.kind === "ashell")) mode = "term";
-    }
+      return t && (t.kind === "term" || t.kind === "ashell");
+    })())) mode = "term";
     nav.querySelectorAll("[data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === mode));
   };
 
@@ -3982,6 +4000,9 @@
     if (open) { closeAiPanel(); setSideView(curSideView || "workspace"); }
     setDrawer(open);
     setMenusOpen(false);
+    if (!open && !document.body.classList.contains("mob-term") && window.VRCloudAI && window.VRCloudAI.open) {
+      window.VRCloudAI.open();
+    }
   });
   const more = $("#mb-more");
   if (more) more.addEventListener("click", (e) => {
@@ -3992,24 +4013,36 @@
     setMenusOpen(open);
   });
   const backdrop = $("#drawer-backdrop");
-  if (backdrop) backdrop.addEventListener("click", () => { setDrawer(false); setMenusOpen(false); });
+  if (backdrop) backdrop.addEventListener("click", () => {
+    setDrawer(false);
+    setMenusOpen(false);
+    if (isNarrowView() && !document.body.classList.contains("mob-term") && window.VRCloudAI && window.VRCloudAI.open) {
+      window.VRCloudAI.open();
+    }
+  });
   const mobNav = $("#mob-nav");
   if (mobNav) mobNav.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-nav]"); if (!btn) return;
     const dest = btn.dataset.nav;
     if (dest === "files") {
-      if (document.body.classList.contains("drawer-open")) setDrawer(false);
-      else { setSideView("workspace"); Mobile.openFiles(); }
+      if (document.body.classList.contains("drawer-open")) {
+        setDrawer(false);
+        if (!document.body.classList.contains("mob-term") && window.VRCloudAI && window.VRCloudAI.open) {
+          window.VRCloudAI.open();
+        }
+      } else { setSideView("workspace"); Mobile.openFiles(); }
     } else if (dest === "editor") {
       Mobile.showEditor();
     } else if (dest === "term") {
       setDrawer(false);
       closeAiPanel();
       setMenusOpen(false);
+      setMobTerm(true);
       focusExistingTerminal();
       Mobile.syncNav();
     } else if (dest === "agent") {
       setDrawer(false);
+      setMobTerm(false);
       setMenusOpen(false);
       if (window.VRCloudAI && window.VRCloudAI.open) window.VRCloudAI.open();
       Mobile.syncNav();
@@ -4031,11 +4064,19 @@
     if (!isNarrowView()) {
       setDrawer(false);
       setMenusOpen(false);
+      setMobTerm(false);
       const sb = $("#sidebar");
       if (sb) sb.style.width = "";
+      // File tabs that skipped Ace on a phone need a real editor now.
+      if (layout) walkLeaves(layout, (l) => {
+        const t = l.tabs.find((x) => x.id === l.active);
+        if (t && t.kind === "file") setActiveTab(l, t.id, false);
+      });
     } else {
       lockMobileViewport();
-      if (layout) walkLeaves(layout, (l) => { if (l._edEl) l._edEl.classList.add("no-minimap"); });
+      if (layout) walkLeaves(layout, (l) => {
+        if (l._edEl) { l._edEl.style.display = "none"; l._edEl.classList.add("no-minimap"); }
+      });
     }
     Mobile.syncNav();
     refitWorkarea();
@@ -4046,4 +4087,10 @@
   if (MQ_NARROW && MQ_NARROW.addEventListener) MQ_NARROW.addEventListener("change", onViewportChange);
   else if (MQ_NARROW && MQ_NARROW.addListener) MQ_NARROW.addListener(onViewportChange);
   Mobile.syncNav();
+  // First paint on a phone: Agent fills the space the editor used to occupy.
+  setTimeout(() => {
+    if (!isNarrowView()) return;
+    if (document.body.classList.contains("drawer-open") || document.body.classList.contains("mob-term")) return;
+    if (window.VRCloudAI && window.VRCloudAI.open) window.VRCloudAI.open();
+  }, 0);
 })();
