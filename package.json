@@ -1,0 +1,49 @@
+{
+  "name": "vrcloud-ide",
+  "version": "3.0.19",
+  "description": "VRCloud IDE - a persistent, realtime, AI-powered web IDE with computer use and remote desktop, self-hosted on your own server",
+  "author": "Rahim AR <support@bayar.gg> (https://github.com/bayar-gg)",
+  "homepage": "https://github.com/bayar-gg/vrcloud-ide#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bayar-gg/vrcloud-ide.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bayar-gg/vrcloud-ide/issues",
+    "email": "support@bayar.gg"
+  },
+  "keywords": [
+    "ide",
+    "web-ide",
+    "cloud-ide",
+    "self-hosted",
+    "ai-agent",
+    "computer-use",
+    "remote-desktop",
+    "terminal",
+    "realtime",
+    "cloud9",
+    "claude",
+    "cursor",
+    "grok"
+  ],
+  "license": "MIT",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/session-store.test.js && node test/realtime-smoke.js && node test/grok-auth.test.js && node test/grok-agent.test.js && node test/ai-provider-grok.test.js"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.31",
+    "ace-builds": "^1.32.6",
+    "express": "^4.18.2",
+    "mime-types": "^2.1.35",
+    "node-pty": "^1.1.0",
+    "ws": "^7.5.9",
+    "xterm": "^4.19.0",
+    "xterm-addon-fit": "^0.5.0"
+  }
+}

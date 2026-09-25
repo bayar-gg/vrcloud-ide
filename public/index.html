@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRCloud IDE</title>
+  <link rel="stylesheet" href="/vendor/xterm/css/xterm.css" />
+  <link rel="stylesheet" href="/css/style.css?v=vrcloud74" />
+</head>
+<body>
+  <!-- Layar muat: tampil sampai layout & workspace siap -->
+  <div id="boot" aria-hidden="true">
+    <div class="boot-box">
+      <div class="boot-logo"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .4-9A6.5 6.5 0 0 0 5.4 8.6 4 4 0 0 0 6 16.5"/><path d="M8 19h9.5"/></svg></div>
+      <div class="boot-title">VRCloud IDE</div>
+      <div class="boot-bar"><i></i></div>
+      <div class="boot-msg">Menyiapkan workspace&hellip;</div>
+    </div>
+  </div>
+  <div id="menubar">
+    <span class="logo">&#9729; VRCloud IDE</span>
+    <div class="menu" data-menu="file">File</div>
+    <div class="menu" data-menu="edit">Edit</div>
+    <div class="menu" data-menu="find">Find</div>
+    <div class="menu" data-menu="view">View</div>
+    <div class="menu" data-menu="goto">Goto</div>
+    <div class="menu" data-menu="run">Run</div>
+    <div class="menu" data-menu="tools">Tools</div>
+    <div class="menu" data-menu="window">Window</div>
+    <span class="mb-spacer"></span>
+    <span class="mb-run" data-act="run" title="Run (simpan lalu jalankan file aktif)" hidden>&#9654; Run</span>
+    <span id="mb-update" class="mb-run mb-update" title="Update VRCloud" hidden>&#10227; Update</span>
+    <span id="sync-status" class="sync-status sb-btn offline" title="Klik untuk Remote Desktop server · status realtime"><span class="os-ico"></span><span class="txt">Offline</span></span>
+    <span id="sys-metrics" class="sys-metrics" title="Pemakaian server (klik untuk spesifikasi)"></span>
+    <span id="gear" title="Preferences">&#9881; Preferences</span>
+    <form class="logout-form" action="/logout" method="post"><button type="submit" title="Logout">Logout</button></form>
+    <span id="ws-name"></span>
+  </div>
+  <div id="menu-pop" class="menu-pop"></div>
+
+  <div id="main">
+    <!-- Activity bar ala Cloud9 -->
+    <div id="activitybar">
+      <div class="act active" data-view="workspace">Workspace</div>
+      <div class="act" data-view="scm">Git</div>
+      <div class="act" data-view="search">Search</div>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div id="sidebar-ws">
+        <div id="openfiles-wrap">
+          <div class="pane-head ph-toggle" id="openfiles-head" title="Klik untuk sembunyikan / tampilkan">
+            <span class="ph-title"><span class="ph-chev">&#9662;</span>OPEN FILES</span>
+            <span class="ph-actions"><span id="openfiles-count" class="ph-count"></span></span>
+          </div>
+          <ul id="openlist"></ul>
+        </div>
+        <div id="fav-wrap">
+          <div class="pane-head">FAVORITES</div>
+          <ul id="favlist" class="tree"></ul>
+        </div>
+        <div class="pane-head">WORKSPACE
+          <span class="ph-actions">
+            <span id="tree-gear" title="Opsi">&#9881;</span>
+            <span id="tree-refresh" title="Refresh">&#8635;</span>
+          </span>
+        </div>
+        <ul id="filetree" class="tree"></ul>
+      </div>
+      <div id="sidebar-scm">
+        <div class="pane-head">SOURCE CONTROL
+          <span class="ph-actions">
+            <span id="scm-refresh" title="Refresh">&#8635;</span>
+          </span>
+        </div>
+        <div id="scm-body"></div>
+      </div>
+      <!-- Pencarian ala VS Code -->
+      <div id="sidebar-search">
+        <div class="pane-head">SEARCH
+          <span class="ph-actions">
+            <span id="srch-refresh" title="Refresh">&#8635;</span>
+            <span id="srch-clear" title="Clear Search Results">&#10005;</span>
+            <span id="srch-collapse" title="Collapse All">&#8863;</span>
+          </span>
+        </div>
+        <div class="srch-box">
+          <div class="srch-row">
+            <span class="srch-tgl" id="srch-toggle-replace" title="Toggle Replace">&#9656;</span>
+            <div class="srch-field">
+              <input id="srch-q" type="text" placeholder="Search" autocomplete="off" spellcheck="false" />
+              <span class="srch-opt" data-opt="case" title="Match Case (Alt+C)">Aa</span>
+              <span class="srch-opt" data-opt="word" title="Match Whole Word (Alt+W)"><u>ab</u></span>
+              <span class="srch-opt" data-opt="regex" title="Use Regular Expression (Alt+R)">.*</span>
+            </div>
+          </div>
+          <div class="srch-row srch-replace" hidden>
+            <span class="srch-tgl-sp"></span>
+            <div class="srch-field"><input id="srch-r" type="text" placeholder="Replace" autocomplete="off" spellcheck="false" /></div>
+            <span class="srch-btn" id="srch-replace-all" title="Replace All">&#8628;</span>
+          </div>
+          <div class="srch-more" id="srch-more" title="Toggle Search Details">&middot;&middot;&middot;</div>
+          <div class="srch-adv" hidden>
+            <label>files to include</label>
+            <input id="srch-inc" type="text" placeholder="e.g. *.ts, src/**/include" autocomplete="off" spellcheck="false" />
+            <label>files to exclude</label>
+            <input id="srch-exc" type="text" placeholder="e.g. *.min.js, dist" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+        <div id="srch-summary" class="srch-summary"></div>
+        <div id="srch-results" class="srch-results"></div>
+      </div>
+      <div id="drop-hint">Lepas file di sini untuk upload</div>
+    </div>
+    <div id="drag-x" class="dragbar-v"></div>
+
+    <div id="content">
+      <div id="workarea"></div>
+    </div>
+  </div>
+  <div id="tree-gear-menu" class="context-menu"></div>
+
+  <div id="statusbar">
+    <div class="sb-group sb-left">
+      <span id="sb-git" class="sb-item sb-btn" title="Git" hidden></span>
+      <span id="sb-file" class="sb-item" title="File aktif"></span>
+      <span id="sb-pos" class="sb-item sb-btn" title="Posisi kursor — klik: ke baris (Ctrl+G)" hidden></span>
+      <span id="status-file" class="sb-msg"></span>
+    </div>
+    <div class="sb-group sb-mid">
+      <span id="sb-agent" class="sb-item sb-btn" title="Agent AI — klik untuk membuka panel"><span class="spark"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg></span><span class="txt">Agent</span></span>
+      <span id="sb-tokens" class="sb-item" title="Pemakaian token percakapan aktif" hidden></span>
+    </div>
+    <div class="sb-group sb-right">
+      <span id="sb-term" class="sb-item sb-btn" title="Terminal — klik untuk fokus" hidden></span>
+      <span id="sb-presence" class="sb-item" title="Browser terhubung ke sesi ini"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="txt">1</span></span>
+      <span id="sb-lang" class="sb-item sb-btn" title="Bahasa file — klik untuk mengganti" hidden></span>
+      <span id="sb-indent" class="sb-item sb-btn" title="Indentasi — klik untuk mengganti" hidden></span>
+      <span id="sb-eol" class="sb-item sb-btn" title="Akhir baris — klik untuk mengganti LF/CRLF" hidden></span>
+      <span id="sb-enc" class="sb-item" title="Encoding" hidden>UTF-8</span>
+      <span id="sb-bell" class="sb-item sb-btn" title="Notifikasi agent"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="bdg" hidden></span></span>
+    </div>
+  </div>
+
+  <!-- Context menu -->
+  <div id="ctx" class="context-menu"></div>
+
+  <!-- Prompt overlay (pengganti prompt bawaan yang minimalis) -->
+  <div id="prompt-modal" class="modal">
+    <div class="modal-box small">
+      <div class="modal-head"><span id="prompt-title">Input</span><span id="prompt-close" class="modal-x">&times;</span></div>
+      <div class="modal-row"><input id="prompt-input" type="text" autocomplete="off" /></div>
+      <div class="modal-actions"><button id="prompt-cancel">Batal</button><button id="prompt-ok" class="primary">OK</button></div>
+    </div>
+  </div>
+
+  <!-- Preferences -->
+  <div id="prefs-modal" class="modal">
+    <div class="modal-box">
+      <div class="modal-head"><span>Preferences</span><span id="prefs-version" class="modal-ver"></span><span id="prefs-close" class="modal-x">&times;</span></div>
+      <div class="prefs-body">
+        <div class="pref-row">
+          <label>Bahasa / Language:</label>
+          <select id="pref-lang">
+            <option value="id">Bahasa Indonesia</option>
+            <option value="en">English</option>
+          </select>
+          <span class="pref-hint">Berlaku untuk seluruh antarmuka (menu, panel AI, status bar). Nama file, isi editor, terminal, dan balasan agent tidak diterjemahkan.</span>
+        </div>
+        <div class="pref-row pref-spec">
+          <div class="pref-spec-side">
+            <label>Server:</label>
+            <div id="prefs-os" class="prefs-os" hidden></div>
+          </div>
+          <div id="prefs-spec" class="prefs-spec">Memuat…</div>
+        </div>
+        <div class="prefs-note">Mendukung Linux (systemd + tmux) dan Windows 10/11 (Scheduled Task + ConPTY). Minimum Node.js 22.13; git untuk checkpoint AI. Rincian: README → Specifications &amp; Platform Support.</div>
+      </div>
+    </div>
+  </div>
+
+  <input id="file-input" type="file" multiple style="display:none" />
+
+  <script src="/vendor/ace/ace.js"></script>
+  <script src="/vendor/ace/ext-language_tools.js"></script>
+  <script src="/vendor/ace/ext-modelist.js"></script>
+  <script src="/vendor/ace/ext-static_highlight.js"></script>
+  <script src="/vendor/xterm/lib/xterm.js"></script>
+  <script src="/vendor/xterm-fit/xterm-addon-fit.js"></script>
+  <script src="/js/i18n.js?v=vrcloud74"></script>
+  <script src="/js/sync-client.js?v=vrcloud74"></script>
+  <script src="/js/app.js?v=vrcloud74"></script>
+  <script src="/js/ai-chat.js?v=vrcloud74"></script>
+</body>
+</html>
