@@ -5,6 +5,8 @@ data/session.json
 data/session.json.tmp
 data/ai-config.json
 data/ai-config.json.tmp
+data/grok-session.json
+data/grok-session.json.tmp
 data/ai-sessions.json
 data/ai-sessions.json.tmp
 data/checkpoints.git/
