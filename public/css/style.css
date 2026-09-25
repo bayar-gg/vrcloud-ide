@@ -960,8 +960,8 @@ body.side-search #sidebar-search { display: flex; }
   #palette .pal-row { min-height: 44px; padding: 10px 14px; }
   #notif-pop { width: min(360px, calc(100vw - 16px)); right: 8px; bottom: calc(var(--mob-nav-h) + env(safe-area-inset-bottom, 0px) + 8px); }
   #toasts { right: 8px; bottom: calc(var(--mob-nav-h) + env(safe-area-inset-bottom, 0px) + 8px); }
-  .vr-float { min-width: 0; max-width: calc(100vw - 8px); }
-  .preview-pill { right: 8px; bottom: calc(var(--mob-nav-h) + env(safe-area-inset-bottom, 0px) + 8px); max-width: calc(100vw - 16px); }
+  .vr-float { min-width: 0; max-width: calc(100vw - 8px); z-index: 65; }
+  .preview-pill { right: 8px; bottom: calc(var(--mob-nav-h) + env(safe-area-inset-bottom, 0px) + 8px); max-width: calc(100vw - 16px); z-index: 60; }
   .modal-row input, .modal-actions button { font-size: 16px; min-height: 44px; }
   #prompt-input { font-size: 16px; }
 }
