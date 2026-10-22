@@ -1,0 +1,39 @@
+{
+  "id": "js-function-replacement",
+  "description": "Replace one JavaScript function without disturbing adjacent declarations.",
+  "prompt": "Replace the add function in src/math.js so it coerces both arguments with Number before addition. Preserve subtract and README.md. Use structural tools when available, then run node verify.js.",
+  "verifyCommand": "node verify.js",
+  "workspace": {
+    "src/math.js": "\"use strict\";\n\nfunction add(a, b) {\n  return a + b;\n}\n\nfunction subtract(a, b) {\n  return a - b;\n}\n\nmodule.exports = { add, subtract };\n",
+    "verify.js": "\"use strict\";\nconst assert = require(\"assert\");\nconst math = require(\"./src/math\");\nassert.strictEqual(math.add(\"2\", \"3\"), 5);\nassert.strictEqual(math.subtract(7, 2), 5);\n",
+    "README.md": "fixture documentation must remain unchanged\n"
+  },
+  "expected": {
+    "src/math.js": "\"use strict\";\n\nfunction add(a, b) {\n  return Number(a) + Number(b);\n}\n\nfunction subtract(a, b) {\n  return a - b;\n}\n\nmodule.exports = { add, subtract };\n",
+    "verify.js": "\"use strict\";\nconst assert = require(\"assert\");\nconst math = require(\"./src/math\");\nassert.strictEqual(math.add(\"2\", \"3\"), 5);\nassert.strictEqual(math.subtract(7, 2), 5);\n",
+    "README.md": "fixture documentation must remain unchanged\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": ["src/math.js"],
+    "allowedChangedFiles": ["src/math.js"],
+    "protectedFiles": ["README.md", "verify.js"],
+    "ast": [
+      {
+        "path": "src/math.js",
+        "kind": "declaration",
+        "name": "add",
+        "count": 1,
+        "nodeType": "function_declaration",
+        "contains": "Number(a) + Number(b)"
+      },
+      {
+        "path": "src/math.js",
+        "kind": "declaration",
+        "name": "subtract",
+        "count": 1,
+        "contains": "return a - b"
+      }
+    ],
+    "verification": { "required": true }
+  }
+}

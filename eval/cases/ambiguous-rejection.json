@@ -1,0 +1,40 @@
+{
+  "id": "ambiguous-rejection",
+  "description": "Reject a structural edit when identical declarations cannot be uniquely selected.",
+  "prompt": "Inspect src/ambiguous.js for duplicate ping declarations. Do not choose one by position and do not edit any file because the target is ambiguous. Run node verify.js and report the ambiguity.",
+  "verifyCommand": "node verify.js",
+  "rejection": {
+    "type": "ambiguous",
+    "path": "src/ambiguous.js",
+    "kind": "declaration",
+    "name": "ping",
+    "operation": "replace",
+    "text": "function ping() { return 2; }",
+    "error": "Ambiguous structural match"
+  },
+  "workspace": {
+    "src/ambiguous.js": "function ping() { return 1; }\nfunction ping() { return 1; }\n",
+    "verify.js": "\"use strict\";\nconst assert = require(\"assert\");\nconst fs = require(\"fs\");\nassert.strictEqual(fs.readFileSync(\"src/ambiguous.js\", \"utf8\"), \"function ping() { return 1; }\\nfunction ping() { return 1; }\\n\");\n",
+    "README.md": "ambiguous fixture guard\n"
+  },
+  "expected": {
+    "src/ambiguous.js": "function ping() { return 1; }\nfunction ping() { return 1; }\n",
+    "verify.js": "\"use strict\";\nconst assert = require(\"assert\");\nconst fs = require(\"fs\");\nassert.strictEqual(fs.readFileSync(\"src/ambiguous.js\", \"utf8\"), \"function ping() { return 1; }\\nfunction ping() { return 1; }\\n\");\n",
+    "README.md": "ambiguous fixture guard\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": [],
+    "allowedChangedFiles": [],
+    "protectedFiles": ["src/ambiguous.js", "README.md", "verify.js"],
+    "ast": [
+      {
+        "path": "src/ambiguous.js",
+        "kind": "declaration",
+        "name": "ping",
+        "count": 2,
+        "nodeType": "function_declaration"
+      }
+    ],
+    "verification": { "required": true }
+  }
+}

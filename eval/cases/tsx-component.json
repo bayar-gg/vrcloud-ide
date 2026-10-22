@@ -1,0 +1,39 @@
+{
+  "id": "tsx-component",
+  "description": "Update a TSX component body without changing its props declaration.",
+  "prompt": "Change Greeting in src/Greeting.tsx to render the name inside a strong element within the section. Preserve GreetingProps, verify.js, and README.md. Use structural tools when available, then run node verify.js.",
+  "verifyCommand": "node verify.js",
+  "workspace": {
+    "src/Greeting.tsx": "export interface GreetingProps {\n  name: string;\n}\n\nexport function Greeting({ name }: GreetingProps) {\n  return <section>Hello {name}</section>;\n}\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst text = fs.readFileSync(\"src/Greeting.tsx\", \"utf8\");\nassert.match(text, /<section>Hello <strong>\\{name\\}<\\/strong><\\/section>/);\nassert.match(text, /interface GreetingProps/);\n",
+    "README.md": "tsx fixture guard\n"
+  },
+  "expected": {
+    "src/Greeting.tsx": "export interface GreetingProps {\n  name: string;\n}\n\nexport function Greeting({ name }: GreetingProps) {\n  return <section>Hello <strong>{name}</strong></section>;\n}\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst text = fs.readFileSync(\"src/Greeting.tsx\", \"utf8\");\nassert.match(text, /<section>Hello <strong>\\{name\\}<\\/strong><\\/section>/);\nassert.match(text, /interface GreetingProps/);\n",
+    "README.md": "tsx fixture guard\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": ["src/Greeting.tsx"],
+    "allowedChangedFiles": ["src/Greeting.tsx"],
+    "protectedFiles": ["README.md", "verify.js"],
+    "ast": [
+      {
+        "path": "src/Greeting.tsx",
+        "kind": "declaration",
+        "name": "Greeting",
+        "count": 1,
+        "nodeType": "function_declaration",
+        "contains": "<strong>{name}</strong>"
+      },
+      {
+        "path": "src/Greeting.tsx",
+        "kind": "declaration",
+        "name": "GreetingProps",
+        "count": 1,
+        "nodeType": "interface_declaration"
+      }
+    ],
+    "verification": { "required": true }
+  }
+}

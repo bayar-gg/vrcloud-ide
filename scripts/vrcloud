@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+APP_DIR="${VRCLOUD_APP_DIR:-/opt/vrcloud-ide}"
+SERVICE="${VRCLOUD_SERVICE:-vrcloud-ide}"
+ENV_FILE="${VRCLOUD_ENV_FILE:-$APP_DIR/.env}"
+PORT="${PORT:-1337}"
+REPOSITORY="${VRCLOUD_REPOSITORY:-https://github.com/bayar-gg/vrcloud-ide.git}"
+BRANCH="${VRCLOUD_BRANCH:-main}"
+
+usage() {
+  cat <<'EOF'
+VRCloud IDE service manager
+
+Usage:
+  vrcloud start                 Start service and wait until ready
+  vrcloud stop                  Stop service
+  vrcloud restart               Restart service and wait until ready
+  vrcloud status                Show service status
+  vrcloud logs                  Follow service logs
+  vrcloud update                Pull the latest code and restart if running
+  vrcloud password              Show login username and password
+  vrcloud newpassword           Set a new password interactively
+  vrcloud newpassword --generate
+                                Generate and display a random password
+  vrcloud help                  Show this help
+EOF
+}
+
+require_root() {
+  if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
+    echo "This command requires root. Run: sudo vrcloud $*" >&2
+    exit 1
+  fi
+}
+
+env_value() {
+  local key="$1"
+  awk -F= -v key="$key" '$1 == key { print substr($0, index($0, "=") + 1); exit }' "$ENV_FILE"
+}
+
+# Public IPv4 via ip.me (falls back to other services, then the local address).
+detect_ip() {
+  local ip=""
+  local url
+  for url in https://ip.me https://ifconfig.me https://api.ipify.org; do
+    ip="$(curl -fsS4 --max-time 5 "$url" 2>/dev/null | tr -d '[:space:]')"
+    [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && { printf '%s' "$ip"; return 0; }
+  done
+  hostname -I 2>/dev/null | awk '{print $1}'
+}
+
+wait_ready() {
+  local port
+  port="$(systemctl show "$SERVICE" -p Environment --value | tr ' ' '\n' |
+    awk -F= '$1 == "PORT" { print $2; exit }')"
+  port="${port:-$PORT}"
+  for _ in $(seq 1 30); do
+    # Silence transient "connection refused" while the server is still booting.
+    if curl -kfsS -o /dev/null "https://127.0.0.1:${port}/login" 2>/dev/null; then
+      local ip
+      ip="$(detect_ip)"
+      echo "VRCloud IDE is running: https://${ip}:${port}/"
+      return 0
+    fi
+    if curl -fsS -o /dev/null "http://127.0.0.1:${port}/login" 2>/dev/null; then
+      local ip
+      ip="$(detect_ip)"
+      echo "VRCloud IDE is running: http://${ip}:${port}/"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "VRCloud IDE failed to become ready." >&2
+  systemctl status "$SERVICE" --no-pager >&2 || true
+  journalctl -u "$SERVICE" -n 100 --no-pager >&2 || true
+  return 1
+}
+
+command="${1:-help}"
+shift || true
+
+case "$command" in
+  start)
+    require_root start
+    systemctl start "$SERVICE"
+    wait_ready
+    ;;
+  stop)
+    require_root stop
+    systemctl stop "$SERVICE"
+    echo "VRCloud IDE stopped."
+    ;;
+  restart)
+    require_root restart
+    systemctl restart "$SERVICE"
+    wait_ready
+    ;;
+  update)
+    require_root update
+    [[ -d "$APP_DIR/.git" ]] || {
+      echo "$APP_DIR is not a Git checkout; cannot update." >&2
+      echo "Reinstall with: curl -fsSL https://raw.githubusercontent.com/bayar-gg/vrcloud-ide/main/scripts/bootstrap.sh | sudo bash" >&2
+      exit 1
+    }
+    command -v git >/dev/null || { echo "git is required for updates." >&2; exit 1; }
+
+    was_active=false
+    systemctl is-active --quiet "$SERVICE" && was_active=true
+
+    service_user="$(systemctl show "$SERVICE" --property=User --value 2>/dev/null)"
+    service_user="${service_user:-vrcloud}"
+
+    echo "Updating VRCloud IDE from ${BRANCH}..."
+    old_rev="$(git -c "safe.directory=$APP_DIR" -C "$APP_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
+    git -c "safe.directory=$APP_DIR" -C "$APP_DIR" fetch --depth 1 "$REPOSITORY" "$BRANCH"
+    git -c "safe.directory=$APP_DIR" -C "$APP_DIR" reset --hard FETCH_HEAD
+    new_rev="$(git -c "safe.directory=$APP_DIR" -C "$APP_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
+
+    # Windows-committed scripts can arrive as CRLF/644; restore LF + exec bit.
+    for f in "$APP_DIR/scripts/vrcloud" "$APP_DIR/scripts/"*.sh "$APP_DIR/start.sh"; do
+      [[ -f "$f" ]] || continue
+      sed -i 's/\r$//' "$f"
+      chmod 755 "$f"
+    done
+
+    # Refresh the 0755 CLI wrapper so PATH never depends on the repo file mode.
+    cat > /usr/local/bin/vrcloud <<EOF
+#!/bin/bash
+exec bash "$APP_DIR/scripts/vrcloud" "\$@"
+EOF
+    chmod 755 /usr/local/bin/vrcloud
+
+    if [[ -f "$APP_DIR/package-lock.json" ]]; then
+      echo "Installing production dependencies..."
+      ( cd "$APP_DIR" && npm ci --production )
+    fi
+
+    # Keep files owned by the service account (installer chowns the same way).
+    if id "$service_user" >/dev/null 2>&1; then
+      service_group="$(id -gn "$service_user")"
+      chown -R "$service_user:$service_group" "$APP_DIR"
+    fi
+
+    systemctl daemon-reload 2>/dev/null || true
+
+    if [[ "$old_rev" == "$new_rev" ]]; then
+      echo "Already up to date (${new_rev:0:7})."
+    else
+      echo "Updated ${old_rev:0:7} -> ${new_rev:0:7}."
+    fi
+
+    if [[ "$was_active" == "true" ]]; then
+      systemctl restart "$SERVICE"
+      wait_ready
+    else
+      echo "Service is stopped. Start it with: vrcloud start"
+    fi
+    ;;
+  status)
+    systemctl status "$SERVICE" --no-pager
+    ;;
+  logs)
+    journalctl -u "$SERVICE" -f
+    ;;
+  password)
+    require_root password
+    [[ -f "$ENV_FILE" ]] || { echo "Environment file not found: $ENV_FILE" >&2; exit 1; }
+    echo "Username: $(env_value AUTH_USER)"
+    echo "Password: $(env_value AUTH_PASS)"
+    ;;
+  newpassword)
+    require_root newpassword
+    if [[ "${1:-}" == "--generate" ]]; then
+      exec env APP_DIR="$APP_DIR" ENV_FILE="$ENV_FILE" VRCLOUD_SERVICE="$SERVICE" \
+        "$APP_DIR/scripts/change-password.sh" --generate
+    fi
+    exec env APP_DIR="$APP_DIR" ENV_FILE="$ENV_FILE" VRCLOUD_SERVICE="$SERVICE" \
+      "$APP_DIR/scripts/change-password.sh"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $command" >&2
+    usage >&2
+    exit 1
+    ;;
+esac

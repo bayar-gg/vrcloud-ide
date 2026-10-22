@@ -1,0 +1,44 @@
+{
+  "id": "stale-rejection",
+  "description": "Reject an AST edit whose source hash became stale.",
+  "prompt": "Run ast_search for updateConfig in src/stale.js. Then run node mutate.js exactly once before using that match. Attempt the structural replacement with the original match and confirm it is rejected as stale. Do not search again or retry the edit. Run node verify.js.",
+  "verifyCommand": "node verify.js",
+  "rejection": {
+    "type": "stale",
+    "path": "src/stale.js",
+    "kind": "declaration",
+    "name": "updateConfig",
+    "operation": "replace",
+    "text": "function updateConfig() { return \"new\"; }",
+    "mutationText": "// external mutation\n",
+    "error": "Stale structural match"
+  },
+  "workspace": {
+    "src/stale.js": "function updateConfig() {\n  return \"old\";\n}\n",
+    "mutate.js": "\"use strict\";\nrequire(\"fs\").appendFileSync(\"src/stale.js\", \"// external mutation\\n\");\n",
+    "verify.js": "\"use strict\";\nconst assert = require(\"assert\");\nconst fs = require(\"fs\");\nassert.strictEqual(fs.readFileSync(\"src/stale.js\", \"utf8\"), \"function updateConfig() {\\n  return \\\"old\\\";\\n}\\n// external mutation\\n\");\n",
+    "README.md": "stale fixture guard\n"
+  },
+  "expected": {
+    "src/stale.js": "function updateConfig() {\n  return \"old\";\n}\n// external mutation\n",
+    "mutate.js": "\"use strict\";\nrequire(\"fs\").appendFileSync(\"src/stale.js\", \"// external mutation\\n\");\n",
+    "verify.js": "\"use strict\";\nconst assert = require(\"assert\");\nconst fs = require(\"fs\");\nassert.strictEqual(fs.readFileSync(\"src/stale.js\", \"utf8\"), \"function updateConfig() {\\n  return \\\"old\\\";\\n}\\n// external mutation\\n\");\n",
+    "README.md": "stale fixture guard\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": ["src/stale.js"],
+    "allowedChangedFiles": ["src/stale.js"],
+    "protectedFiles": ["README.md", "mutate.js", "verify.js"],
+    "ast": [
+      {
+        "path": "src/stale.js",
+        "kind": "declaration",
+        "name": "updateConfig",
+        "count": 1,
+        "contains": "return \"old\"",
+        "notContains": "return \"new\""
+      }
+    ],
+    "verification": { "required": true }
+  }
+}

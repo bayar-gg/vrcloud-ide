@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/bayar-gg/vrcloud-ide/security/advisories/new
+    about: Report security issues privately. Please do not open a public issue.
+  - name: Questions and support
+    url: https://t.me/bayar_gg
+    about: Ask questions or get help on Telegram, or email support@bayar.gg.

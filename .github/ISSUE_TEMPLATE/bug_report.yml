@@ -1,0 +1,64 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Security issues must not be filed here; see SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: VRCloud IDE version
+      description: Shown in Preferences (top right) or in the Update menu.
+      placeholder: v3.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - Linux bootstrap script (systemd)
+        - Windows installer (Scheduled Task)
+        - Manual (npm start)
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Server OS and Node.js version
+      placeholder: Ubuntu 24.04, Node 22.14
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: Chrome 130 on Windows 11
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant part of `vrcloud logs` (or data/vrcloud-ide.log) and the browser console. Remove secrets.
+      render: text
+  - type: checkboxes
+    id: area
+    attributes:
+      label: Area
+      options:
+        - label: Editor / realtime sync
+        - label: Terminals / Run button
+        - label: AI agent
+        - label: Browser automation
+        - label: Computer use / Remote desktop
+        - label: Install / update / CLI
+        - label: Other

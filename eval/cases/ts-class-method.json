@@ -1,0 +1,39 @@
+{
+  "id": "ts-class-method",
+  "description": "Replace one TypeScript class method while retaining its type contract.",
+  "prompt": "Update Parser.normalize in src/parser.ts to trim and lowercase its input. Do not alter Parser.version, verify.js, or README.md. Use structural tools when available, then run node verify.js.",
+  "verifyCommand": "node verify.js",
+  "workspace": {
+    "src/parser.ts": "export class Parser {\n  static readonly version = 1;\n\n  normalize(value: string): string {\n    return value;\n  }\n}\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst text = fs.readFileSync(\"src/parser.ts\", \"utf8\");\nassert.match(text, /return value\\.trim\\(\\)\\.toLowerCase\\(\\);/);\nassert.match(text, /static readonly version = 1/);\n",
+    "README.md": "typescript fixture guard\n"
+  },
+  "expected": {
+    "src/parser.ts": "export class Parser {\n  static readonly version = 1;\n\n  normalize(value: string): string {\n    return value.trim().toLowerCase();\n  }\n}\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst text = fs.readFileSync(\"src/parser.ts\", \"utf8\");\nassert.match(text, /return value\\.trim\\(\\)\\.toLowerCase\\(\\);/);\nassert.match(text, /static readonly version = 1/);\n",
+    "README.md": "typescript fixture guard\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": ["src/parser.ts"],
+    "allowedChangedFiles": ["src/parser.ts"],
+    "protectedFiles": ["README.md", "verify.js"],
+    "ast": [
+      {
+        "path": "src/parser.ts",
+        "kind": "declaration",
+        "name": "normalize",
+        "count": 1,
+        "nodeType": "method_definition",
+        "contains": "value.trim().toLowerCase()"
+      },
+      {
+        "path": "src/parser.ts",
+        "kind": "declaration",
+        "name": "Parser",
+        "count": 1,
+        "nodeType": "class_declaration"
+      }
+    ],
+    "verification": { "required": true }
+  }
+}

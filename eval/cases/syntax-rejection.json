@@ -1,0 +1,40 @@
+{
+  "id": "syntax-rejection",
+  "description": "Reject a structural replacement that increases syntax errors.",
+  "prompt": "Use structural tools to attempt replacing valid in src/syntax.js with the intentionally invalid text `function valid(`. Confirm the edit is rejected for increasing syntax errors. Do not use another edit mechanism and leave every file unchanged. Run node verify.js.",
+  "verifyCommand": "node verify.js",
+  "rejection": {
+    "type": "syntax",
+    "path": "src/syntax.js",
+    "kind": "declaration",
+    "name": "valid",
+    "operation": "replace",
+    "text": "function valid(",
+    "error": "syntax errors would increase"
+  },
+  "workspace": {
+    "src/syntax.js": "function valid() {\n  return 1;\n}\n",
+    "verify.js": "\"use strict\";\nconst assert = require(\"assert\");\nconst fs = require(\"fs\");\nassert.strictEqual(fs.readFileSync(\"src/syntax.js\", \"utf8\"), \"function valid() {\\n  return 1;\\n}\\n\");\n",
+    "README.md": "syntax fixture guard\n"
+  },
+  "expected": {
+    "src/syntax.js": "function valid() {\n  return 1;\n}\n",
+    "verify.js": "\"use strict\";\nconst assert = require(\"assert\");\nconst fs = require(\"fs\");\nassert.strictEqual(fs.readFileSync(\"src/syntax.js\", \"utf8\"), \"function valid() {\\n  return 1;\\n}\\n\");\n",
+    "README.md": "syntax fixture guard\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": [],
+    "allowedChangedFiles": [],
+    "protectedFiles": ["src/syntax.js", "README.md", "verify.js"],
+    "ast": [
+      {
+        "path": "src/syntax.js",
+        "kind": "declaration",
+        "name": "valid",
+        "count": 1,
+        "contains": "return 1"
+      }
+    ],
+    "verification": { "required": true }
+  }
+}

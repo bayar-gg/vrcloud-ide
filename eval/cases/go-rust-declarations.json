@@ -1,0 +1,42 @@
+{
+  "id": "go-rust-declarations",
+  "description": "Edit named declarations in Go and Rust in one bounded task.",
+  "prompt": "Update Go Ready in go/status.go to return true and Rust ready in rust/status.rs to return true. Preserve all other declarations plus verify.js and README.md. Use structural tools when available, then run node verify.js.",
+  "verifyCommand": "node verify.js",
+  "workspace": {
+    "go/status.go": "package status\n\nfunc Ready() bool {\n\treturn false\n}\n\nfunc Name() string {\n\treturn \"worker\"\n}\n",
+    "rust/status.rs": "pub fn ready() -> bool {\n    false\n}\n\npub fn name() -> &'static str {\n    \"worker\"\n}\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nassert.match(fs.readFileSync(\"go/status.go\", \"utf8\"), /func Ready\\(\\) bool \\{\\n\\treturn true\\n\\}/);\nassert.match(fs.readFileSync(\"rust/status.rs\", \"utf8\"), /pub fn ready\\(\\) -> bool \\{\\n    true\\n\\}/);\n",
+    "README.md": "go and rust fixture guard\n"
+  },
+  "expected": {
+    "go/status.go": "package status\n\nfunc Ready() bool {\n\treturn true\n}\n\nfunc Name() string {\n\treturn \"worker\"\n}\n",
+    "rust/status.rs": "pub fn ready() -> bool {\n    true\n}\n\npub fn name() -> &'static str {\n    \"worker\"\n}\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nassert.match(fs.readFileSync(\"go/status.go\", \"utf8\"), /func Ready\\(\\) bool \\{\\n\\treturn true\\n\\}/);\nassert.match(fs.readFileSync(\"rust/status.rs\", \"utf8\"), /pub fn ready\\(\\) -> bool \\{\\n    true\\n\\}/);\n",
+    "README.md": "go and rust fixture guard\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": ["go/status.go", "rust/status.rs"],
+    "allowedChangedFiles": ["go/status.go", "rust/status.rs"],
+    "protectedFiles": ["README.md", "verify.js"],
+    "ast": [
+      {
+        "path": "go/status.go",
+        "kind": "declaration",
+        "name": "Ready",
+        "count": 1,
+        "nodeType": "function_declaration",
+        "contains": "return true"
+      },
+      {
+        "path": "rust/status.rs",
+        "kind": "declaration",
+        "name": "ready",
+        "count": 1,
+        "nodeType": "function_item",
+        "contains": "true"
+      }
+    ],
+    "verification": { "required": true }
+  }
+}

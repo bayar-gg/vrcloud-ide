@@ -1,0 +1,39 @@
+{
+  "id": "python-decorated-function",
+  "description": "Replace a decorated Python function while preserving its decorator.",
+  "prompt": "Update cached_total in src/service.py to return sum(values) while preserving the @cache decorator and untouched helper function. Do not alter verify.js or README.md. Use structural tools when available, then run node verify.js.",
+  "verifyCommand": "node verify.js",
+  "workspace": {
+    "src/service.py": "from functools import cache\n\n@cache\ndef cached_total(values):\n    return 0\n\ndef helper():\n    return \"keep\"\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst text = fs.readFileSync(\"src/service.py\", \"utf8\");\nassert.match(text, /@cache\\ndef cached_total\\(values\\):\\n    return sum\\(values\\)/);\nassert.match(text, /def helper\\(\\):\\n    return \\\"keep\\\"/);\n",
+    "README.md": "python fixture guard\n"
+  },
+  "expected": {
+    "src/service.py": "from functools import cache\n\n@cache\ndef cached_total(values):\n    return sum(values)\n\ndef helper():\n    return \"keep\"\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst text = fs.readFileSync(\"src/service.py\", \"utf8\");\nassert.match(text, /@cache\\ndef cached_total\\(values\\):\\n    return sum\\(values\\)/);\nassert.match(text, /def helper\\(\\):\\n    return \\\"keep\\\"/);\n",
+    "README.md": "python fixture guard\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": ["src/service.py"],
+    "allowedChangedFiles": ["src/service.py"],
+    "protectedFiles": ["README.md", "verify.js"],
+    "ast": [
+      {
+        "path": "src/service.py",
+        "kind": "declaration",
+        "name": "cached_total",
+        "count": 1,
+        "nodeType": "function_definition",
+        "contains": "return sum(values)"
+      },
+      {
+        "path": "src/service.py",
+        "kind": "declaration",
+        "name": "helper",
+        "count": 1,
+        "contains": "return \"keep\""
+      }
+    ],
+    "verification": { "required": true }
+  }
+}

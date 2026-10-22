@@ -1,0 +1,16 @@
+{
+  "enabled": false,
+  "provider": "cursor",
+  "model": "auto",
+  "cases": [
+    "js-function-replacement",
+    "ts-class-method"
+  ],
+  "explorerCount": 2,
+  "maxRepairAttempts": 1,
+  "caseTimeoutMs": 600000,
+  "verifyTimeoutMs": 120000,
+  "verifyMaxOutput": 65536,
+  "keepWorkspaces": false,
+  "output": "eval/results/latest.json"
+}

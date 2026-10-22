@@ -1,0 +1,24 @@
+{
+  "id": "browser-extract-value",
+  "description": "Drive the headless browser by structure (snapshot/extract, not screenshots), read one value from a local page, write it to a file, and prove it with the fixture verifier. Requires a Chromium-based browser on the server.",
+  "prompt": "Use the browser_* tools for this (not WebFetch and not the shell for reading the page). Open the local file page.html from this workspace in the headless browser: build its file:// URL from the workspace's absolute path. Read the amount shown in the table row labelled \"Order total\" (use browser_extract or browser_snapshot, not a screenshot), write ONLY that amount into result.txt followed by a single newline, then run `node verify.js` and report its output.",
+  "requires": ["browser"],
+  "verifyCommand": "node verify.js",
+  "workspace": {
+    "page.html": "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>Invoice 1042</title></head>\n<body>\n<h1>Invoice 1042</h1>\n<table>\n<tr><th>Item</th><th>Amount</th></tr>\n<tr><td>Subtotal</td><td>4,500.00</td></tr>\n<tr><td>Tax</td><td>321.50</td></tr>\n<tr><td>Order total</td><td id=\"total\">4821.50</td></tr>\n</table>\n<p>Decoy: the previous invoice total was 3990.00.</p>\n</body></html>\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst got = fs.readFileSync(\"result.txt\", \"utf8\").trim();\nassert.strictEqual(got, \"4821.50\", \"result.txt must contain exactly the Order total\");\nconsole.log(\"ok: result.txt = \" + got);\n",
+    "README.md": "fixture documentation must remain unchanged\n"
+  },
+  "expected": {
+    "page.html": "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>Invoice 1042</title></head>\n<body>\n<h1>Invoice 1042</h1>\n<table>\n<tr><th>Item</th><th>Amount</th></tr>\n<tr><td>Subtotal</td><td>4,500.00</td></tr>\n<tr><td>Tax</td><td>321.50</td></tr>\n<tr><td>Order total</td><td id=\"total\">4821.50</td></tr>\n</table>\n<p>Decoy: the previous invoice total was 3990.00.</p>\n</body></html>\n",
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst got = fs.readFileSync(\"result.txt\", \"utf8\").trim();\nassert.strictEqual(got, \"4821.50\", \"result.txt must contain exactly the Order total\");\nconsole.log(\"ok: result.txt = \" + got);\n",
+    "README.md": "fixture documentation must remain unchanged\n",
+    "result.txt": "4821.50\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": ["result.txt"],
+    "allowedChangedFiles": ["result.txt"],
+    "protectedFiles": ["page.html", "verify.js", "README.md"],
+    "verification": { "required": true }
+  }
+}

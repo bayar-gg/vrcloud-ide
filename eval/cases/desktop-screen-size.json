@@ -1,0 +1,22 @@
+{
+  "id": "desktop-screen-size",
+  "description": "Computer use smoke: move the pointer with desktop_move, read the exact position from the tool status line (not from the picture), write it to a file, and prove it with the fixture verifier. Requires a desktop (or the Linux virtual desktop) on the server.",
+  "prompt": "Use the desktop_* tools (computer use). Take a desktop_screenshot and note the screen size from its status line (\"Screen WxH px\"). Then call desktop_move with x=0.25 and y=0.75 and read the pointer position that the status line reports as a fraction. Write exactly one line into screen.txt: that fraction as X,Y with three decimals (for example 0.250,0.750), followed by a single newline. Then run `node verify.js`, and in your reply state the screen size and the verifier output.",
+  "requires": ["desktop"],
+  "verifyCommand": "node verify.js",
+  "workspace": {
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst line = fs.readFileSync(\"screen.txt\", \"utf8\").trim();\nconst p = /^(0\\.\\d{3}),(0\\.\\d{3})$/.exec(line);\nassert.ok(p, \"screen.txt must be X,Y fractions with three decimals, got: \" + line);\nassert.ok(Math.abs(+p[1] - 0.25) < 0.01 && Math.abs(+p[2] - 0.75) < 0.01, \"pointer must have reached (0.25, 0.75), got \" + line);\nconsole.log(\"ok: pointer \" + line);\n",
+    "README.md": "fixture documentation must remain unchanged\n"
+  },
+  "expected": {
+    "verify.js": "\"use strict\";\nconst fs = require(\"fs\");\nconst assert = require(\"assert\");\nconst line = fs.readFileSync(\"screen.txt\", \"utf8\").trim();\nconst p = /^(0\\.\\d{3}),(0\\.\\d{3})$/.exec(line);\nassert.ok(p, \"screen.txt must be X,Y fractions with three decimals, got: \" + line);\nassert.ok(Math.abs(+p[1] - 0.25) < 0.01 && Math.abs(+p[2] - 0.75) < 0.01, \"pointer must have reached (0.25, 0.75), got \" + line);\nconsole.log(\"ok: pointer \" + line);\n",
+    "README.md": "fixture documentation must remain unchanged\n",
+    "screen.txt": "0.250,0.750\n"
+  },
+  "assertions": {
+    "requiredChangedFiles": ["screen.txt"],
+    "allowedChangedFiles": ["screen.txt"],
+    "protectedFiles": ["verify.js", "README.md"],
+    "verification": { "required": true }
+  }
+}

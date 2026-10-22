@@ -1,0 +1,55 @@
+{
+  "name": "vrcloud-ide",
+  "version": "4.0.6",
+  "description": "VRCloud IDE - a persistent, realtime, AI-powered web IDE with computer use and remote desktop, self-hosted on your own server",
+  "author": "Rahim AR <support@bayar.gg> (https://github.com/bayar-gg)",
+  "homepage": "https://github.com/bayar-gg/vrcloud-ide#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bayar-gg/vrcloud-ide.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bayar-gg/vrcloud-ide/issues",
+    "email": "support@bayar.gg"
+  },
+  "keywords": [
+    "ide",
+    "web-ide",
+    "cloud-ide",
+    "self-hosted",
+    "ai-agent",
+    "computer-use",
+    "remote-desktop",
+    "terminal",
+    "realtime",
+    "cloud9",
+    "claude",
+    "cursor",
+    "grok"
+  ],
+  "license": "MIT",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "npm run test:unit",
+    "test:unit": "node test/provider-factory.test.js && node test/smart-agent-contracts.test.js && node test/agent-orchestrator.test.js && node test/agent-instructions.test.js && node test/agent-guards.test.js && node test/image-tools.test.js && node test/web-search.test.js && node test/verification-engine.test.js && node test/ai-event-compat.test.js && node test/smart-agent-ast.test.js && node test/smart-agent-context.test.js && node test/smart-agent-lsp-memory.test.js && node test/eval-assertions.test.js && node test/session-store.test.js && node test/grok-auth.test.js && node test/grok-agent.test.js && node test/ai-provider-grok.test.js",
+    "test:prompts": "node test/agent-instructions.test.js && node test/agent-guards.test.js && node test/image-tools.test.js",
+    "test:smoke": "node test/realtime-smoke.js",
+    "eval:agent": "node scripts/eval-agent.js"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.31",
+    "@repomix/tree-sitter-wasms": "^0.1.17",
+    "ace-builds": "^1.32.6",
+    "express": "^4.18.2",
+    "mime-types": "^2.1.35",
+    "node-pty": "^1.1.0",
+    "web-tree-sitter": "^0.27.0",
+    "ws": "^7.5.9",
+    "xterm": "^4.19.0",
+    "xterm-addon-fit": "^0.5.0"
+  }
+}
